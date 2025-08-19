@@ -9,7 +9,7 @@ use App\Http\Controllers\ArticleLIkeController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
 use App\Http\Controllers\FrontendController;
-
+use App\Models\Article;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,7 +36,9 @@ Route::get('/articles/{article}', [ArticleController::class, 'show']);
 Route::get('/articles/{article}/comments', [CommentController::class, 'index']);
 
 // Stories milik user tertentu
-Route::get('/users/{name}/article', [ArticleController::class, 'userArticle']);
+// routes/web.php atau api.php
+Route::get('/users/{user:name}/articles', [ArticleController::class, 'userArticle']);
+
 
 // =============================
 // Routes for Authenticated Users

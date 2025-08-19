@@ -19,9 +19,9 @@ class User extends Authenticatable implements JWTSubject
         "remember_token"
     ];
 
-    public function article()
+    public function articles()
     {
-        return $this->hasMany(Article::class);
+        return $this->hasMany(Article::class,'user_id');
     }
     public function comments()
     {

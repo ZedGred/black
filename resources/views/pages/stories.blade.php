@@ -1,4 +1,3 @@
-
 @extends('dashboard')
 
 @section('title', 'Your Story')
@@ -31,53 +30,63 @@
     <ul id="pagination" class="pagination justify-content-center"></ul>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     loadUserArticles();
 
-    function loadUserArticles(page = 1) {
-        fetch(`/api/user/{{ $user->username }}/articles?page=${page}`)
-            .then(res => res.json())
-            .then(data => {
-                const tbody = document.querySelector('#userArticlesTable tbody');
-                tbody.innerHTML = '';
+    async function loadUserArticles(page = 1) {
+        try {
+            const response = await axios.get(`/api/users/{{ $user->name }}/articles?page=${page}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('input[name=_token]')?.value || ''
+                },
+                withCredentials: true // ini penting kalau pakai cookies/session
+            });
 
-                if (!data.data || data.data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="text-center">Tidak ada artikel publik</td></tr>`;
-                    return;
-                }
+            const data = response.data;
+            const tbody = document.querySelector('#userArticlesTable tbody');
+            tbody.innerHTML = '';
 
-                data.data.forEach(article => {
-                    let createdAt = new Date(article.created_at);
-                    let options = { month: 'short', day: '2-digit' };
-                    let formattedDate = createdAt.toLocaleDateString('en-US', options);
+            const articles = data.stories?.data || [];
 
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${article.title}</td>
-                            <td>${formattedDate}</td>
-                            <td>${article.comments.length} komentar</td>
-                            <td>${article.liked_users_count} like</td>
-                        </tr>
-                    `;
-                });
+            if (articles.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center">Tidak ada artikel publik</td></tr>`;
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
 
-                renderPagination(data);
-            })
-            .catch(err => {
-                console.error(err);
-                document.querySelector('#userArticlesTable tbody').innerHTML = `
-                    <tr><td colspan="4" class="text-center text-danger">Gagal memuat data</td></tr>
+            articles.forEach(article => {
+                let createdAt = new Date(article.created_at);
+                let options = { month: 'short', day: '2-digit' };
+                let formattedDate = createdAt.toLocaleDateString('en-US', options);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${article.title}</td>
+                        <td>${formattedDate}</td>
+                        <td>0 komentar</td>
+                        <td>0 like</td>
+                    </tr>
                 `;
             });
+
+            renderPagination(data.stories);
+        } catch (error) {
+            console.error(error);
+            document.querySelector('#userArticlesTable tbody').innerHTML = `
+                <tr><td colspan="4" class="text-center text-danger">Gagal memuat data</td></tr>
+            `;
+        }
     }
 
-    function renderPagination(data) {
+    function renderPagination(stories) {
         const pagination = document.getElementById('pagination');
         pagination.innerHTML = '';
 
-        data.links.forEach(link => {
-            if (link.url === null) {
+        stories.links.forEach(link => {
+            if (!link.url) {
                 pagination.innerHTML += `
                     <li class="page-item disabled">
                         <span class="page-link">${link.label}</span>
@@ -95,8 +104,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.querySelectorAll('#pagination a').forEach(a => {
             a.addEventListener('click', function(e) {
                 e.preventDefault();
-                const page = this.dataset.page;
-                loadUserArticles(page);
+                loadUserArticles(this.dataset.page);
             });
         });
     }

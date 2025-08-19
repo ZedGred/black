@@ -94,14 +94,10 @@ class ArticleController extends Controller
         ]);
     }
 
-    public function userArticle($username)
+    public function userArticle(User $user)
     {
-        // Cari user berdasarkan username
-        $user = User::where('name',$username)->firstOrFail();
-
-        // Ambil semua artikel berdasarkan user_id
-        $stories = Article::where('user_id', $user->id)
-            ->with('user') // relasi penulis
+        $stories = $user->articles()
+            ->with('user') // eager load penulis
             ->latest()
             ->paginate(10);
 
