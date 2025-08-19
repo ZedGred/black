@@ -24,10 +24,30 @@ Route::post('/login', [FrontendController::class, 'showLogin'])->name('login');
 Route::post('/register', [FrontendController::class, 'showRegister'])->name('register');
 Route::get('/register', [FrontendController::class, 'showRegister'])->name('register');
 
+Route::middleware(['jwt.cookie'])->group(function () {
+    Route::get('/dashboard', [FrontendController::class, 'showDashboard'])
+        ->name('dashboard');
 
-Route::middleware('jwt.cookie')->group(function () {
-    Route::get('/dashboard', [FrontendController::class, 'showDashboard'])->name('dashboard');
-    Route::get('/{username}', [FrontendController::class, 'showProfile'])->name('profile');
-    Route::post('/registerwriter', [FrontendController::class, 'showRegisterWriter'])->name('registerwriter');
-    Route::get('/registerwriter', [FrontendController::class, 'showRegisterWriter'])->name('registerwriter');
+    Route::middleware('role:user')->group(function () {
+        Route::get('/registerwriter', [FrontendController::class, 'showRegisterWriter'])
+            ->name('registerwriter');
+    });
+    Route::middleware('role:writer')->group(function () {
+        Route::get('/new-story', [FrontendController::class, 'showStoryWrite'])
+            ->name('write');
+        Route::get('/new-story', [FrontendController::class, 'showStoryWrite'])
+            ->name('write');
+        Route::get('/me/stories/public', [FrontendController::class, 'showStoriesPublic'])
+            ->name('stories');
+    });
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/master-data/role', [FrontendController::class, 'showRegisterWriter'])
+            ->name('role');
+        Route::get('/master-data/users', [FrontendController::class, 'showRegisterWriter'])
+            ->name('users');
+    });
+
+    Route::get('/{username}', [FrontendController::class, 'showProfile'])
+        ->where('username', '[A-Za-z0-9_]+') // Constraint biar ga bentrok sama route lain
+        ->name('profile');
 });

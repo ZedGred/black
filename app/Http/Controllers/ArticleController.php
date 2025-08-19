@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -12,6 +13,7 @@ class ArticleController extends Controller
     {
         $articles = Article::with(['user', 'comments'])
             ->withCount('likedUsers')
+            ->orderBy('created_at', 'desc') // terbaru di atas
             ->paginate(10);
 
         return response()->json($articles);
@@ -89,6 +91,24 @@ class ArticleController extends Controller
 
         return response()->json([
             'message' => 'Article deleted successfully'
+        ]);
+    }
+
+    public function userArticle($username)
+    {
+        // Cari user berdasarkan username
+        $user = User::where('name',$username)->firstOrFail();
+
+        // Ambil semua artikel berdasarkan user_id
+        $stories = Article::where('user_id', $user->id)
+            ->with('user') // relasi penulis
+            ->latest()
+            ->paginate(10);
+
+        return response()->json([
+            'status' => 'success',
+            'user' => $user->only(['id', 'name', 'email']),
+            'stories' => $stories
         ]);
     }
 }

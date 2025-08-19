@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Helpers\JwtHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -13,49 +14,48 @@ class AuthController extends Controller
 {
     public function registerUser(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
-            'email' => 'required|string|email',
+        $validated = $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:6|confirmed'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 422);
-        }
+        // Ubah spasi menjadi underscore
+        $username = str_replace(' ', '_', $validated['name']);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'name'     => $username,
+            'email'    => $validated['email'],
+            'password' => Hash::make($validated['password']),
         ]);
 
         $user->assignRole('user');
 
         $token = Auth::guard('api')->login($user);
-        $cookie = cookie('token', $token, 60, null, null, true, true);
+        $cookie = JwtHelper::makeJwtCookie($token);
+
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'User created successfully',
-            'data' => [
+            'data'    => [
                 'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
+                    'id'    => $user->id,
+                    'name'  => $user->name,
                     'email' => $user->email,
                 ],
                 'token' => [
                     'access_token' => $token,
-                    'token_type' => 'Bearer',
-                    'expires_in' => auth('api')->factory()->getTTL() * 60
+                    'token_type'   => 'Bearer',
+                    'expires_in'   => auth('api')->factory()->getTTL() * 60
                 ],
-
             ]
         ])->cookie($cookie);
     }
 
+
     public function registerWriter(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
             'email' => 'required|string|email',
             'password' => 'required|string|min:6'
         ]);
@@ -64,37 +64,53 @@ class AuthController extends Controller
             return response()->json(['error' => $validator->errors()], 422);
         }
 
+        // Cari user berdasarkan email
         $user = User::where('email', $request->email)->first();
 
-        if ($user) {
-            if ($user->hasRole('writer')) {
-                return response()->json([
-                    'error' => 'This email is already registered as a writer'
-                ], 422);
-            }
-            $user->syncRoles('writer');
-        } else {
+        if (!$user) {
             return response()->json([
                 'error' => 'This email is not registered in the system'
             ], 422);
         }
 
+        // Cek password sama dengan yang sudah tersimpan
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'error' => 'Incorrect password'
+            ], 422);
+        }
+
+        // Jika user sudah writer
+        if ($user->hasRole('writer')) {
+            return response()->json([
+                'error' => 'This email is already registered as a writer'
+            ], 422);
+        }
+
+        // Tambahkan role writer
+        $user->syncRoles('writer');
+
+        // Generate token
         $token = Auth::guard('api')->login($user);
-        $cookie = cookie('token', $token, 60, null, null, true, true);
+        $cookie = JwtHelper::makeJwtCookie($token);
+
         return response()->json([
             'status' => 'success',
-            'message' => 'User created successfully',
+            'message' => 'User updated as writer successfully',
             'data' => [
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+
                 ],
-            ],
-            'token' => [
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-                'expires_in' => auth('api')->factory()->getTTL() * 60
+                'token' => [
+                    'access_token' => $token,
+                    'token_type' => 'Bearer',
+                    'expires_in' => auth('api')->factory()->getTTL() * 60
+                ],
+
+
             ]
         ])->cookie($cookie);
     }
@@ -121,7 +137,8 @@ class AuthController extends Controller
         }
 
         $user = Auth::guard('api')->user();
-        $cookie = cookie('token', $token, 60, null, null, true, true);
+        $cookie = JwtHelper::makeJwtCookie($token);
+
         return response()->json([
             'status' => 'success',
             'message' => 'User logged in successfully',

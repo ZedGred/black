@@ -16,11 +16,13 @@
             <div class="menu menu-column menu-rounded menu-sub-indention fw-semibold fs-6 mt-4" id="kt_sidebar_menu">
                 @foreach ($menus as $menu)
                     <a
-                        href="{{ route($menu['route'], $menu['route'] === 'profile' ? ['username' => $user->name] : []) }}">
+                        href="{{ route(
+                            $menu['route'],
+                            $menu['route'] === 'profile' ? ['username' => str_replace(' ', '_', $user->name)] : []
+                        ) }}">
                         <i class="{{ $menu['icon'] }}"></i> {{ $menu['title'] }}
                     </a>
                 @endforeach
-
             </div>
         </div>
 

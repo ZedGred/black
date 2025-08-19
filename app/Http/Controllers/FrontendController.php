@@ -28,17 +28,18 @@ class FrontendController extends Controller
         $user = auth()->user();
         $roleName = auth()->user()->getRoleNames()->first();
         $menus = config("menu.$roleName", []);
-        
+
         return view('pages.home', compact('menus', 'user'));
     }
     public function showProfile($username)
     {
-        $user = auth()->user();
         $username = User::where('name', $username)->firstOrFail();
-        $roleName = auth()->user()->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);// ambil menu sesuai role
+        $authUser = auth()->user();
+        $roleName = $authUser->getRoleNames()->first();
+        $menus = config("menu.$roleName", []);
+
         return view('pages.profile', [
-            'user' => $user,
+            'user' => $authUser,
             'menus' => $menus,
             'username' => $username,
         ]);
@@ -46,7 +47,26 @@ class FrontendController extends Controller
 
     public function showRegisterWriter()
     {
-        Log::debug("registerew");
-        return view('auth.registerwriter');
+        $user = auth()->user();
+        $roleName = auth()->user()->getRoleNames()->first();
+        $menus = config("menu.$roleName", []);
+
+        return view('auth.registerwriter', compact('menus', 'user'));
+    }
+    public function showStoryWrite()
+    {
+        $user = auth()->user();
+        $roleName = auth()->user()->getRoleNames()->first();
+        $menus = config("menu.$roleName", []);
+
+        return view('pages.write', compact('menus', 'user'));
+    }
+    public function showStoriesPublic()
+    {
+        $user = auth()->user();
+        $roleName = auth()->user()->getRoleNames()->first();
+        $menus = config("menu.$roleName", []);
+
+        return view('pages.stories', compact('menus', 'user'));
     }
 }

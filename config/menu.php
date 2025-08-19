@@ -20,8 +20,8 @@ return [
         ['title' => 'Stats', 'route' => 'dashboard', 'icon' => 'fas fa-users'],
         ['title' => 'Following', 'route' => 'dashboard', 'icon' => 'fas fa-users'],
         
-        ['title' => 'Write', 'route' => 'dashboard', 'icon' => 'fas fa-users'],
-        ['title' => 'Stories', 'route' => 'dashboard', 'icon' => 'fas fa-users'],
+        ['title' => 'Write', 'route' => 'write', 'icon' => 'fas fa-users'],
+        ['title' => 'Stories', 'route' => 'stories', 'icon' => 'fas fa-users'],
     ],
     
     'user' => [

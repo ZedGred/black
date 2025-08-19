@@ -30,10 +30,13 @@ Route::post('login', [AuthController::class, 'login']);
 Route::post('refresh', [AuthController::class, 'refresh']);
 
 // Public content
-Route::get('articles', [ArticleController::class, 'index']);
-Route::get('articles/{article}', [ArticleController::class, 'show']);
-Route::get('articles/{article}/comments', [CommentController::class, 'index']);
+// Articles
+Route::get('/articles', [ArticleController::class, 'index']);
+Route::get('/articles/{article}', [ArticleController::class, 'show']);
+Route::get('/articles/{article}/comments', [CommentController::class, 'index']);
 
+// Stories milik user tertentu
+Route::get('/users/{name}/article', [ArticleController::class, 'userArticle']);
 
 // =============================
 // Routes for Authenticated Users

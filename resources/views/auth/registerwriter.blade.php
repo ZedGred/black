@@ -3,104 +3,82 @@
 @section('title', 'Register Writer')
 
 @section('dashboard-content')
-<div class="d-flex flex-center flex-column min-vh-100 bg-light">
-    <div class="card shadow rounded -4 w-100 w-md-450px p-10">
-        <div class="text-center mb-8">
-            <h1 class="fw-bold">Register as Writer</h1>
-        </div>
+    <div class="container mt-5" style="max-width: 500px;">
+        <h1 class="text-center mb-4">Register as Writer</h1>
 
         <form id="registerWriterForm">
             @csrf
 
-            {{-- Name --}}
-            <div class="mb-3">
-                <label class="form-label">Name</label>
-                <input type="text" name="name" class="form-control" value="{{ old('name') }}">
-                <div class="invalid-feedback" id="error-name"></div>
-            </div>
-
-            {{-- Username --}}
-            <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" name="username" class="form-control" value="{{ old('username') }}">
-                <div class="invalid-feedback" id="error-username"></div>
-            </div>
-
             {{-- Email --}}
             <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" name="email" class="form-control" value="{{ old('email') }}">
-                <div class="invalid-feedback" id="error-email"></div>
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" class="form-control" value="{{ old('email') }}">
+                <div class="text-danger small" id="error-email"></div>
             </div>
 
             {{-- Password --}}
             <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control">
-                <div class="invalid-feedback" id="error-password"></div>
-            </div>
-
-            {{-- Confirm Password --}}
-            <div class="mb-3">
-                <label class="form-label">Confirm Password</label>
-                <input type="password" name="password_confirmation" class="form-control">
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" class="form-control">
+                <div class="text-danger small" id="error-password"></div>
             </div>
 
             <button type="submit" class="btn btn-primary w-100">Register</button>
         </form>
-
-        <div class="text-center mt-5">
-            <a href="{{ route('login') }}" class="link-primary">Already have an account? Login</a>
-        </div>
     </div>
-</div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        axios.defaults.withCredentials = true;
 
-<script>
-document.getElementById('registerWriterForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+        document.getElementById('registerWriterForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
 
-    // Reset error feedback
-    ['name','username','email','password'].forEach(id => {
-        document.getElementById('error-'+id).textContent = '';
-    });
-
-    const form = e.target;
-    const formData = new FormData(form);
-    const payload = Object.fromEntries(formData.entries());
-
-    try {
-        const response = await fetch("{{ url('/api/register/writer') }}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            // Sukses register
-            alert(data.message);
-            window.location.href = "{{ route('login') }}";
-        } else if (data.errors) {
-            // Tampilkan error validasi
-            Object.keys(data.errors).forEach(key => {
-                const errorEl = document.getElementById('error-'+key);
-                if(errorEl){
-                    errorEl.textContent = data.errors[key][0];
-                    errorEl.previousElementSibling.classList.add('is-invalid');
-                }
+            // Reset error messages
+            ['email', 'password'].forEach(id => {
+                const el = document.getElementById('error-' + id);
+                if (el) el.textContent = '';
             });
-        } else {
-            alert(data.message || 'Something went wrong');
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Something went wrong');
-    }
-});
-</script>
+
+            const payload = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await axios.post("{{ url('/api/register/writer') }}", payload, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value
+                    }
+                });
+
+                // Debug alert
+                alert(
+                    'Response data:\n' + JSON.stringify(response.data, null, 2) +
+                    '\n\nCurrent cookies:\n' + document.cookie
+                );
+
+                if (response.data.status === 'success') {
+                    alert(response.data.message);
+                    window.location.href = '/dashboard'; // Redirect ke dashboard
+                } else if (response.data.errors) {
+                    Object.keys(response.data.errors).forEach(key => {
+                        const el = document.getElementById('error-' + key);
+                        if (el) el.textContent = response.data.errors[key][0];
+                    });
+                } else {
+                    alert(response.data.message || 'Something went wrong');
+                }
+
+            } catch (error) {
+                let msg = 'Something went wrong';
+                if (error.response && error.response.data) {
+                    msg = JSON.stringify(error.response.data, null, 2);
+                }
+                alert(msg);
+                console.error(error);
+            }
+        });
+    </script>
+
 @endsection
