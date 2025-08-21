@@ -41,11 +41,11 @@ Route::middleware(['jwt.cookie'])->group(function () {
             ->name('stories');
     });
     Route::middleware('role:admin')->group(function () {
-        Route::get('/master-data/role', [FrontendController::class, 'showRegisterWriter'])
-            ->name('role');
-        Route::get('/master-data/users', [FrontendController::class, 'showRegisterWriter'])
-            ->name('users');
-    });
+    Route::get('/master-data/roles', [FrontendController::class, 'showRolesPage'])
+        ->name('roles.index');
+    Route::get('/master-data/users', [FrontendController::class, 'showUsersPage'])
+        ->name('users.index');
+});
 
     Route::get('/{username}', [FrontendController::class, 'showProfile'])
         ->where('username', '[A-Za-z0-9_]+') // Constraint biar ga bentrok sama route lain

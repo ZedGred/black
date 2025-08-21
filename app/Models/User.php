@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
@@ -9,8 +10,11 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasRoles;
-    use Notifiable;
+    use HasRoles, Notifiable, HasUuids;
+
+    protected $primaryKey =  'id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = ['name', 'email', 'password'];
     protected $hidden = [
@@ -21,7 +25,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function articles()
     {
-        return $this->hasMany(Article::class,'user_id');
+        return $this->hasMany(Article::class, 'user_id');
     }
     public function comments()
     {

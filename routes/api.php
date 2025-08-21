@@ -1,15 +1,13 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ArticleLIkeController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
-use App\Http\Controllers\FrontendController;
-use App\Models\Article;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +25,9 @@ use App\Models\Article;
 // =============================
 Route::post('register/users', [AuthController::class, 'registerUser']);
 Route::post('login', [AuthController::class, 'login']);
+Route::get('/halo', function () {
+    return 'halo';
+});
 Route::post('refresh', [AuthController::class, 'refresh']);
 
 // Public content
@@ -47,11 +48,11 @@ Route::middleware('auth:api')->group(function () {
     Route::post('register/writer', [AuthController::class, 'registerWriter']);
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
-    
+
     // Routes for comments
     Route::prefix('comments')->group(function () {
         Route::post('/articles/{article}', [CommentController::class, 'store'])->middleware('permission:comments.create');
-        Route::put ('/{comment}', [CommentController::class, 'update'])->middleware('permission:comments.edit');
+        Route::put('/{comment}', [CommentController::class, 'update'])->middleware('permission:comments.edit');
         Route::delete('/{comment}', [CommentController::class, 'destroy'])->middleware('permission:comments.delete');
 
         // Like/unlike comment
@@ -74,5 +75,23 @@ Route::middleware('auth:api')->group(function () {
         Route::get('admin/users', [AuthController::class, 'listUsers']);
     });
 
-    Route::get('/api/dashboard', [FrontendController::class, 'showDashboards'])->name('dashboard');
+    Route::prefix('master-data')->group(function () {
+        // Users
+        Route::prefix('users')->group(function () {
+            Route::get('/', [UserController::class, 'index'])->middleware('permission:users.show');
+            Route::get('/{user}', [UserController::class, 'show'])->middleware('permission:users.show');
+            Route::post('/', [UserController::class, 'store'])->middleware('permission:users.store');
+            Route::put('/{user}', [UserController::class, 'update'])->middleware('permission:users.update');
+            Route::delete('/{user}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
+        });
+
+        // Roles
+        Route::prefix('roles')->group(function () {
+            Route::get('/', [RoleController::class, 'index'])->middleware('permission:roles.show');
+            Route::get('/{role}', [RoleController::class, 'show'])->middleware('permission:roles.show');
+            Route::post('/', [RoleController::class, 'store'])->middleware('permission:roles.store');
+            Route::put('/{role}', [RoleController::class, 'update'])->middleware('permission:roles.update');
+            Route::delete('/{role}', [RoleController::class, 'destroy'])->middleware('permission:roles.delete');
+        });
+    });
 });
