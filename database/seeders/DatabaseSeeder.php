@@ -20,7 +20,10 @@ class DatabaseSeeder extends Seeder
         // ]);
         $this->call([
             RolePermissionSeeder::class,
-            AdminSeeder::class
+            AdminSeeder::class,
+            UserSeeder::class,
+            ArticleSeeder::class,
+            CommentSeeder::class
             // Tambahkan seeder lain di sini kalau ada
         ]);
     }

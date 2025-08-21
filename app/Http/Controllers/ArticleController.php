@@ -16,7 +16,11 @@ class ArticleController extends Controller
             ->orderBy('created_at', 'desc') // terbaru di atas
             ->paginate(10);
 
-        return response()->json($articles);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Articles get succesfully',
+            'data' => $articles
+        ]);
     }
 
 
@@ -29,6 +33,7 @@ class ArticleController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
+                'status' => 'success',
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
@@ -40,6 +45,7 @@ class ArticleController extends Controller
         $article = Article::create($data);
 
         return response()->json([
+            'status' => 'success',
             'message' => 'Article created successfully',
             'data' => $article
         ], 201);
@@ -51,7 +57,11 @@ class ArticleController extends Controller
             ->withCount('likedUsers') // ini hitung jumlah user yang nge-like
             ->findOrFail($id);
 
-        return response()->json($article);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Article updated successfully',
+            'data' => $article
+        ]);
     }
 
     public function update(Request $request, string $id)
@@ -66,6 +76,7 @@ class ArticleController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
+                'status' => 'success',
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
@@ -78,6 +89,7 @@ class ArticleController extends Controller
         $article->refresh(); // <-- ini penting
 
         return response()->json([
+            'status' => 'success',
             'message' => 'Article updated successfully',
             'data' => $article
         ]);
@@ -96,7 +108,7 @@ class ArticleController extends Controller
 
     public function userArticle(User $user)
     {
-        $stories = $user->articles()
+        $data = $user->articles()
             ->with('user') // eager load penulis
             ->latest()
             ->paginate(10);
@@ -104,7 +116,7 @@ class ArticleController extends Controller
         return response()->json([
             'status' => 'success',
             'user' => $user->only(['id', 'name', 'email']),
-            'stories' => $stories
+            'data' => $data
         ]);
     }
 }

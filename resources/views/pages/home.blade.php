@@ -23,81 +23,94 @@
         <ul id="pagination" class="pagination justify-content-center"></ul>
     </nav>
 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        loadArticles();
+        document.addEventListener("DOMContentLoaded", () => {
 
-        function loadArticles(page = 1) {
-            fetch(`/api/articles?page=${page}`)
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.querySelector('#articlesTable tbody');
+            async function loadArticles(page = 1) {
+                const tbody = document.querySelector('#articlesTable tbody');
+                try {
+                    const response = await axios.get(`/api/articles?page=${page}`, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const paginatedData = response.data.data;
+                    const data = paginatedData.data || [];
                     tbody.innerHTML = '';
 
-                    if (!data.data || data.data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="4" class="text-center">Tidak ada artikel</td></tr>`;
+                    if (data.length === 0) {
+                        tbody.innerHTML =
+                            `<tr><td colspan="4" class="text-center">Tidak ada artikel publik</td></tr>`;
+                        document.getElementById('pagination').innerHTML = '';
                         return;
                     }
 
-                    data.data.forEach(article => {
-                        let createdAt = new Date(article.created_at);
-                        let options = { month: 'short', day: '2-digit' };
-                        let formattedDate = createdAt.toLocaleDateString('en-US', options);
+                    let rows = '';
+                    data.forEach(article => {
+                        const createdAt = new Date(article.created_at);
+                        const formattedDate = createdAt.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: '2-digit'
+                        });
+                        const userName = article.user?.name || '—';
+                        const commentCount = article.comments?.length || 0;
+                        const likesCount = article.liked_users_count || 0;
 
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${article.title} <br><small>${formattedDate}</small></td>
-                                <td>${article.user.name}</td>
-                                <td>${article.comments.length} komentar</td>
-                                <td>${article.liked_users_count} like</td>
-                            </tr>
-                        `;
+                        rows += `
+                <tr>
+                    <td>${article.title} <br><small>${formattedDate}</small></td>
+                    <td>${userName}</td>
+                    <td>${commentCount} komentar</td>
+                    <td>${likesCount} like</td>
+                </tr>
+                `;
                     });
 
-                    renderPagination(data);
-                })
-                .catch(err => {
-                    console.error(err);
-                    document.querySelector('#articlesTable tbody').innerHTML = `
-                        <tr><td colspan="4" class="text-center text-danger">Gagal memuat data</td></tr>
-                    `;
-                });
-        }
+                    tbody.innerHTML = rows;
+                    renderPagination(paginatedData, loadArticles);
 
-        function renderPagination(data) {
-            const pagination = document.getElementById('pagination');
-            pagination.innerHTML = '';
-
-            data.links.forEach(link => {
-                if (link.url === null) {
-                    pagination.innerHTML += `
-                        <li class="page-item disabled">
-                            <span class="page-link">${link.label}</span>
-                        </li>
-                    `;
-                } else {
-                    pagination.innerHTML += `
-                        <li class="page-item ${link.active ? 'active' : ''}">
-                            <a class="page-link" href="#" data-page="${getPageNumber(link.url)}">${link.label}</a>
-                        </li>
-                    `;
+                } catch (error) {
+                    console.error(error);
+                    tbody.innerHTML =
+                        `<tr><td colspan="4" class="text-center text-danger">Gagal memuat data</td></tr>`;
                 }
-            });
+            }
 
-            // Event click pagination
-            document.querySelectorAll('#pagination a').forEach(a => {
-                a.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const page = this.dataset.page;
-                    loadArticles(page);
+            function renderPagination(paginatedData, callback) {
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                paginatedData.links.forEach(link => {
+                    const isDisabled = !link.url;
+                    const isActive = link.active ? 'active' : '';
+                    const page = getPageNumber(link.url);
+
+                    pagination.innerHTML += `
+            <li class="page-item ${isDisabled ? 'disabled' : ''} ${isActive}">
+                ${isDisabled 
+                    ? `<span class="page-link">${link.label}</span>` 
+                    : `<a class="page-link" href="#" data-page="${page}">${link.label}</a>`}
+            </li>
+            `;
                 });
-            });
-        }
 
-        function getPageNumber(url) {
-            const params = new URL(url).searchParams;
-            return params.get('page') || 1;
-        }
-    });
+                document.querySelectorAll('#pagination a').forEach(a => {
+                    a.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        callback(this.dataset.page);
+                    });
+                });
+            }
+
+            function getPageNumber(url) {
+                if (!url) return 1;
+                const params = new URL(url).searchParams;
+                return params.get('page') || 1;
+            }
+
+            loadArticles();
+        });
     </script>
 @endsection

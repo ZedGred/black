@@ -3,116 +3,136 @@
 @section('title', 'Your Story')
 
 @section('dashboard-content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="fw-bold">Your Story</h1>
-    <a href="{{ route('write') }}" class="btn btn-primary">
-        <i class="bi bi-pencil-square"></i> Write
-    </a>
-</div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">Your Story</h1>
+        <a href="{{ route('write') }}" class="btn btn-primary">
+            <i class="bi bi-pencil-square"></i> Write
+        </a>
+    </div>
 
-<table id="userArticlesTable" class="table table-striped">
-    <thead>
-        <tr>
-            <th>Judul</th>
-            <th>Tanggal</th>
-            <th>Komentar</th>
-            <th>Likes</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td colspan="4" class="text-center">Loading...</td>
-        </tr>
-    </tbody>
-</table>
+    <table id="userArticlesTable" class="table table-striped">
+        <thead>
+            <tr>
+                <th>Judul</th>
+                <th>Tanggal</th>
+                <th>Komentar</th>
+                <th>Likes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="4" class="text-center">Loading...</td>
+            </tr>
+        </tbody>
+    </table>
 
-<nav>
-    <ul id="pagination" class="pagination justify-content-center"></ul>
-</nav>
+    <nav>
+        <ul id="pagination" class="pagination justify-content-center"></ul>
+    </nav>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    loadUserArticles();
-
-    async function loadUserArticles(page = 1) {
-        try {
-            const response = await axios.get(`/api/users/{{ $user->name }}/articles?page=${page}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name=_token]')?.value || ''
-                },
-                withCredentials: true // ini penting kalau pakai cookies/session
-            });
-
-            const data = response.data;
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = document.querySelector('input[name=_token]')?.value || '';
             const tbody = document.querySelector('#userArticlesTable tbody');
-            tbody.innerHTML = '';
+            const pagination = document.getElementById('pagination');
 
-            const articles = data.stories?.data || [];
+            // ==============================
+            // Load user articles
+            // ==============================
+            async function loadUserArticles(page = 1) {
+                try {
+                    const res = await axios.get(`/api/users/{{ $user->name }}/articles?page=${page}`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': token
+                        },
+                        withCredentials: true
+                    });
 
-            if (articles.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center">Tidak ada artikel publik</td></tr>`;
-                document.getElementById('pagination').innerHTML = '';
-                return;
-            }
+                    const paginatedData = res.data.data; // JSON dari controller
+                    const data = paginatedData.data; // array artikel
+                    renderPagination(paginatedData);
 
-            articles.forEach(article => {
-                let createdAt = new Date(article.created_at);
-                let options = { month: 'short', day: '2-digit' };
-                let formattedDate = createdAt.toLocaleDateString('en-US', options);
+                    tbody.innerHTML = '';
 
-                tbody.innerHTML += `
+                    if (data.length === 0) {
+                        tbody.innerHTML =
+                            `<tr><td colspan="4" class="text-center">Tidak ada artikel publik</td></tr>`;
+                        pagination.innerHTML = '';
+                        return;
+                    }
+
+                    let rows = '';
+                    data.forEach(article => {
+                        const createdAt = new Date(article.created_at);
+                        const formattedDate = createdAt.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: '2-digit'
+                        });
+
+                        const userName = article.user?.name || '—';
+                        const commentCount = article.comments?.length || 0;
+                        const likesCount = article.liked_users_count || 0;
+
+                        rows += `
                     <tr>
-                        <td>${article.title}</td>
-                        <td>${formattedDate}</td>
-                        <td>0 komentar</td>
-                        <td>0 like</td>
+                        <td>${article.title} <br><small>${formattedDate}</small></td>
+                        <td>${userName}</td>
+                        <td>${commentCount} komentar</td>
+                        <td>${likesCount} like</td>
                     </tr>
                 `;
-            });
+                    });
 
-            renderPagination(data.stories);
-        } catch (error) {
-            console.error(error);
-            document.querySelector('#userArticlesTable tbody').innerHTML = `
-                <tr><td colspan="4" class="text-center text-danger">Gagal memuat data</td></tr>
-            `;
-        }
-    }
+                    tbody.innerHTML = rows;
+                    renderPagination(res.data.data);
 
-    function renderPagination(stories) {
-        const pagination = document.getElementById('pagination');
-        pagination.innerHTML = '';
-
-        stories.links.forEach(link => {
-            if (!link.url) {
-                pagination.innerHTML += `
-                    <li class="page-item disabled">
-                        <span class="page-link">${link.label}</span>
-                    </li>
-                `;
-            } else {
-                pagination.innerHTML += `
-                    <li class="page-item ${link.active ? 'active' : ''}">
-                        <a class="page-link" href="#" data-page="${getPageNumber(link.url)}">${link.label}</a>
-                    </li>
-                `;
+                } catch (err) {
+                    console.error(err);
+                    tbody.innerHTML =
+                        `<tr><td colspan="4" class="text-center text-danger">Gagal memuat data</td></tr>`;
+                }
             }
-        });
 
-        document.querySelectorAll('#pagination a').forEach(a => {
-            a.addEventListener('click', function(e) {
-                e.preventDefault();
-                loadUserArticles(this.dataset.page);
-            });
-        });
-    }
+            // ==============================
+            // Render pagination
+            // ==============================
+            function renderPagination(stories) {
+                pagination.innerHTML = '';
+                stories.links.forEach(link => {
+                    const disabled = !link.url ? 'disabled' : '';
+                    const active = link.active ? 'active' : '';
+                    const page = getPageNumber(link.url);
 
-    function getPageNumber(url) {
-        const params = new URL(url).searchParams;
-        return params.get('page') || 1;
-    }
-});
-</script>
+                    pagination.innerHTML += `
+                <li class="page-item ${disabled} ${active}">
+                    ${disabled 
+                        ? `<span class="page-link">${link.label}</span>` 
+                        : `<a class="page-link" href="#" data-page="${page}">${link.label}</a>`}
+                </li>
+            `;
+                });
+
+                // Event click
+                document.querySelectorAll('#pagination a').forEach(a => {
+                    a.addEventListener('click', e => {
+                        e.preventDefault();
+                        loadUserArticles(a.dataset.page);
+                    });
+                });
+            }
+
+            function getPageNumber(url) {
+                if (!url) return 1;
+                const params = new URL(url).searchParams;
+                return params.get('page') || 1;
+            }
+
+            // ==============================
+            // Init
+            // ==============================
+            loadUserArticles();
+        });
+    </script>
 @endsection
