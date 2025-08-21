@@ -3,8 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+
+use App\Models\Permission;
+use App\Models\Role;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -26,10 +27,15 @@ class RolePermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'comments.delete', 'guard_name' => $guard]);
         Permission::firstOrCreate(['name' => 'comments.like'  , 'guard_name' => $guard]);
 
-        Permission::firstOrCreate(['name' => 'users.view'  ,    'guard_name' => $guard]);
-        Permission::firstOrCreate(['name' => 'users.create',    'guard_name' => $guard]);
-        Permission::firstOrCreate(['name' => 'users.edit'  ,    'guard_name' => $guard]);
-        Permission::firstOrCreate(['name' => 'users.delete',    'guard_name' => $guard]);
+        Permission::firstOrCreate(['name' => 'users.show'   ,    'guard_name' => $guard]);
+        Permission::firstOrCreate(['name' => 'users.store'  ,    'guard_name' => $guard]);
+        Permission::firstOrCreate(['name' => 'users.update' ,    'guard_name' => $guard]);
+        Permission::firstOrCreate(['name' => 'users.delete' ,    'guard_name' => $guard]);
+        
+        Permission::firstOrCreate(['name' => 'roles.show'   ,    'guard_name' => $guard]);
+        Permission::firstOrCreate(['name' => 'roles.create' ,    'guard_name' => $guard]);
+        Permission::firstOrCreate(['name' => 'roles.update' ,    'guard_name' => $guard]);
+        Permission::firstOrCreate(['name' => 'roles.delete' ,    'guard_name' => $guard]);
 
         // ===========================
         // 2. Roles
