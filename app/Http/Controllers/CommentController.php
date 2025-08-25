@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,7 +25,7 @@ class CommentController extends Controller
         return Comment::with(['user', 'article'])->paginate(10);
     }
 
-    public function store(Request $request, \App\Models\Article $article)
+    public function store(Request $request, Article $article)
     {
         $validator = Validator::make($request->all(), [
             'content' => 'required|string',

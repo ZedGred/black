@@ -3,12 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
-
-use function Psy\debug;
+use App\Helpers\UserHelper;
 
 class FrontendController extends Controller
 {
+    /**
+     * Ambil user login + menu sesuai role
+     */
+    private function getUserAndMenus()
+    {
+        $authUser = auth()->user();
+        $menus = [];
+
+        if ($authUser) {
+            $roleName = $authUser->getRoleNames()->first();
+            $menus = config("menu.$roleName", []);
+        }
+
+        return [$authUser, $menus];
+    }
+
     public function showLogin()
     {
         return view('auth.login');
@@ -23,50 +37,47 @@ class FrontendController extends Controller
     {
         return view('landing');
     }
-    public function showDashboard()
-    {
-        $user = auth()->user();
-        $roleName = auth()->user()->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
 
-        return view('pages.home', compact('menus', 'user'));
+    public function showHome()
+    {
+        [$authUser, $menus] = $this->getUserAndMenus();
+
+        return view('pages.home', compact('menus', 'authUser'));
     }
+
     public function showProfile($username)
     {
-        $username = User::where('name', $username)->firstOrFail();
-        $authUser = auth()->user();
-        $roleName = $authUser->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
+        $profileUser = User::where('name', $username)->firstOrFail();
+        [$authUser, $menus] = $this->getUserAndMenus();
 
-        return view('pages.profile', [
-            'user' => $authUser,
-            'menus' => $menus,
-            'username' => $username,
-        ]);
+        return view('pages.profile', compact('profileUser', 'authUser', 'menus'));
     }
 
     public function showRegisterWriter()
     {
-        $user = auth()->user();
-        $roleName = auth()->user()->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
+        [$authUser, $menus] = $this->getUserAndMenus();
 
-        return view('auth.registerwriter', compact('menus', 'user'));
+        return view('auth.registerwriter', compact('menus', 'authUser'));
     }
+
     public function showStoryWrite()
     {
-        $user = auth()->user();
-        $roleName = auth()->user()->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
+        [$authUser, $menus] = $this->getUserAndMenus();
 
-        return view('pages.write', compact('menus', 'user'));
+        return view('pages.write', compact('menus', 'authUser'));
     }
+
     public function showStoriesPublic()
     {
-        $user = auth()->user();
-        $roleName = auth()->user()->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
+        [$authUser, $menus] = $this->getUserAndMenus();
 
-        return view('pages.stories', compact('menus', 'user'));
+        return view('pages.stories', compact('menus', 'authUser'));
+    }
+
+    public function showArticle()
+    {
+        [$authUser, $menus] = $this->getUserAndMenus();
+
+        return view('pages.articles', compact('menus', 'authUser'));
     }
 }

@@ -42,7 +42,7 @@
             // ==============================
             async function loadUserArticles(page = 1) {
                 try {
-                    const res = await axios.get(`/api/users/{{ $user->name }}/articles?page=${page}`, {
+                    const res = await axios.get(`/api/users/{{ $authUser->name }}/articles?page=${page}`, {
                         headers: {
                             'Accept': 'application/json',
                             'X-CSRF-TOKEN': token

@@ -88,7 +88,7 @@
                 // Kalau sukses, server sudah set cookie HttpOnly token
                 // Jadi tidak perlu simpan token di localStorage
 
-                window.location.href = '/dashboard';
+                window.location.href = '/home';
 
             } catch (error) {
                 if (error.response && error.response.data) {

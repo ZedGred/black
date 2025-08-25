@@ -96,7 +96,7 @@
 
                 // Kalau sampai sini berarti register sukses
                 alert('Registrasi berhasil! Selamat datang.');
-                window.location.href = '/dashboard';
+                window.location.href = '/home';
 
             } catch (error) {
                 if (error.response && error.response.data) {

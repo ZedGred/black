@@ -1,15 +1,13 @@
-{{-- resources/views/profile/show.blade.php --}}
-@extends('dashboard')
+@extends(auth()->check() ? 'dashboard' : 'layouts.app')
 
-@section('title',$username->name)
+@section('title', $profileUser->name)
 
-@section('dashboard-content')
+@section(auth()->check() ? 'dashboard-content' : 'content')
 <div class="container mt-5">
     <div class="row">
         {{-- Kiri --}}
         <div class="col-md-8">
-            {{-- Nama besar --}}
-            <h1 class="fw-bold" style="font-size: 3rem;">{{ $username->name }}</h1>
+            <h1 class="fw-bold" style="font-size: 3rem;">{{ $profileUser->name }}</h1>
 
             {{-- Navbar sederhana --}}
             <nav class="mt-3">
@@ -23,9 +21,9 @@
                 </ul>
             </nav>
 
-            {{-- Konten Home/About bisa pakai yield kalau mau extend --}}
             <div class="mt-4">
-                @yield('profile-content')
+                {{-- konten tambahan --}}
+                <p>Ini halaman profil publik dari <b>{{ $profileUser->name }}</b>.</p>
             </div>
         </div>
 
@@ -33,18 +31,17 @@
         <div class="col-md-4 text-center">
             {{-- Foto profil --}}
             <div class="mb-3">
-                <img src="{{ $username->profile_picture ? asset('storage/' . $username->profile_picture) : asset('assets/media/avatars/blank.png') }}"
-                     alt="{{ $username->name }}"
+                <img src="{{ $profileUser->profile_picture ? asset('storage/' . $profileUser->profile_picture) : asset('assets/media/avatars/blank.png') }}"
+                     alt="{{ $profileUser->name }}"
                      class="rounded-circle"
                      style="width: 150px; height: 150px; object-fit: cover;">
             </div>
 
-            {{-- Nama --}}
-            <h4>{{ $username->name }}</h4>
+            <h4>{{ $profileUser->name }}</h4>
 
-            {{-- Tombol Edit Profile --}}
-            @if(auth()->id() === $username->id)
-                <a href="{{ route('profile', $username->name) }}" class="btn btn-outline-primary btn-sm mt-2">
+            {{-- Tombol Edit Profile hanya untuk owner --}}
+            @if(auth()->id() === $profileUser->id)
+                <a href="{{ route('home', $profileUser->name) }}" class="btn btn-outline-primary btn-sm mt-2">
                     Edit Profile
                 </a>
             @endif
@@ -52,3 +49,4 @@
     </div>
 </div>
 @endsection
+
