@@ -24,9 +24,4 @@ class CommentPolicy
 
         return $user->id === $comment->user_id;
     }
-
-    public function unlike(User $user, Comment $comment): bool
-    {
-        return $comment->likedUsers()->where('user_id', $user->id)->exists();
-    }
 }

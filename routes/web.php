@@ -22,21 +22,23 @@ Route::get('/', function () {
 Route::get('/login', [FrontendController::class, 'showLogin'])->name('login');
 Route::get('/register', [FrontendController::class, 'showRegister'])->name('register');
 
+Route::get('/home', [FrontendController::class, 'showHome'])
+    ->name('home');
 Route::middleware(['jwt.cookie'])->group(function () {
-    Route::get('/home', [FrontendController::class, 'showHome'])
-        ->name('home');
 
     Route::middleware('role:user')->group(function () {
         Route::get('/registerwriter', [FrontendController::class, 'showRegisterWriter'])
             ->name('registerwriter');
     });
-    Route::middleware('role:writer')->group(function () {
+    Route::middleware('permission:articles.create')->group(function () {
         Route::get('/new-story', [FrontendController::class, 'showStoryWrite'])
             ->name('write');
         Route::get('/new-story', [FrontendController::class, 'showStoryWrite'])
             ->name('write');
-        Route::get('/me/stories/public', [FrontendController::class, 'showStoriesPublic'])
-            ->name('stories');
+        Route::get('/me/stories/published', [FrontendController::class, 'showStoriesPublic'])
+            ->name('published');
+        Route::get('/me/stories/drafts', [FrontendController::class, 'showStoriesDrafts'])
+            ->name('drafts');
     });
     Route::middleware('role:admin')->group(function () {
         Route::get('/master-data/roles', [FrontendController::class, 'showRolesPage'])
@@ -49,6 +51,12 @@ Route::middleware(['jwt.cookie'])->group(function () {
 Route::get('/{username}', [FrontendController::class, 'showProfile'])
     ->where('username', '[A-Za-z0-9_]+') // Constraint biar ga bentrok sama route lain
     ->name('profile');
+
+Route::get('/{username}/about', [FrontendController::class, 'showProfileAbout'])
+    ->where('username', '[A-Za-z0-9_]+') // Constraint biar ga bentrok sama route lain
+    ->name('about');
+
+
 
 Route::get('/{username}/{article_id}', [FrontendController::class, 'showArticle'])
     ->whereUuid('article_id') // pastikan id bentuk UUID

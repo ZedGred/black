@@ -1,4 +1,4 @@
-@extends('dashboard')
+@extends('layouts.app')
 
 @section('title', 'Write Article')
 
@@ -66,30 +66,20 @@
                 }
             });
 
-            // Debug alert
-            alert(
-                'Response data:\n' + JSON.stringify(response.data, null, 2) +
-                '\n\nCurrent cookies:\n' + document.cookie
-            );
-
             if (response.data.status === 'success') {
-                alert(response.data.message || 'Article published successfully');
-                window.location.href = '/dashboard/articles';
+                alert('Article published successfully');
+                window.location.href = '/home';
             } else if (response.data.errors) {
                 Object.keys(response.data.errors).forEach(key => {
                     const el = document.getElementById('error-' + key);
                     if (el) el.textContent = response.data.errors[key][0];
                 });
-            } else {
-                alert(response.data.message || 'Something went wrong');
-            }
-
+            } 
         } catch (error) {
             let msg = 'Something went wrong';
             if (error.response && error.response.data) {
                 msg = JSON.stringify(error.response.data, null, 2);
             }
-            alert(msg);
             console.error(error);
         }
     });

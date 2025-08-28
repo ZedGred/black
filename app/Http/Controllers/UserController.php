@@ -14,13 +14,23 @@ class UserController extends Controller
     // GET /api/users
     public function index()
     {
-        $users = User::paginate(10); // pagination best practice
+        $users = User::with('roles') // eager load roles
+            ->paginate(10);
+
+        // Format user agar menampilkan role name langsung
+        $users->getCollection()->transform(function ($user) {
+            $user->role = $user->roles->pluck('name')->first() ?? '-';
+            unset($user->roles); // opsional, supaya lebih ringkas
+            return $user;
+        });
+
         return response()->json([
             'success' => true,
-            "message" => 'Get all users succesfully',
+            'message' => 'Get all users successfully',
             'data' => $users
         ]);
     }
+
 
     // GET /api/users/{id}
     public function show(User $user)

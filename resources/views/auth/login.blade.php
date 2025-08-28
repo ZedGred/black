@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('title', 'Login')
 
@@ -57,6 +57,13 @@
                 <button type="submit" class="btn btn-primary btn-lg w-100 py-4 fw-bold fs-6">
                     Sign In
                 </button>
+                <!-- Register Section -->
+                <div class="text-center mt-4">
+                    <span class="text-gray-400 fs-6 me-2">Belum punya akun?</span>
+                    <a href="{{ route('register') }}" class="fw-bold fs-6">
+                        Register
+                    </a>
+                </div>
             </form>
         </div>
     </div>

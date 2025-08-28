@@ -24,8 +24,4 @@ class ArticlePolicy
 
         return $user->id === $article->user_id;
     }
-    public function unlike(User $user, Article $article): bool
-    {
-        return $article->likedUsers()->where('user_id', $user->id)->exists();
-    }
 }

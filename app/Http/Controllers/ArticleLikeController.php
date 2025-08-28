@@ -6,31 +6,37 @@ use App\Models\Article;
 
 class ArticleLikeController extends Controller
 {
+
     public function like(Article $article)
     {
         $user = auth()->user();
-        if ($article->likedUsers()->where('user_id', $user->id)->exists()) {
+        if ($article->isLikedBy($user)) {
             return response()->json([
                 'message' => 'Already liked'
             ], 409);
         }
 
-        $article->likedUsers()->attach($user->id);
-
+        $article->like($user);
         return response()->json([
-            'message' => 'Article liked successfully'
+            'message' => 'Comment liked successfully',
+            'data' => [
+                'liked_by_user' => true,
+                'liked_users_count' => $article->likesCount()
+            ]
         ], 201);
     }
 
-    public function unlike(string $id)
+    public function unlike(Article $article)
     {
-        $article = Article::findOrFail($id); // manual ambil model
-        $this->authorize('unlike', $article);
         $user = auth()->user();
-        $article->likedUsers()->detach($user->id);
+        $article->unlike($user);
 
         return response()->json([
-            'message' => 'Article unliked successfully'
+            'message' => 'Article unliked successfully',
+            'data' => [
+                'liked_by_user' => false,
+                'liked_users_count' => $article->likesCount()
+            ]
         ], 200);
     }
 }

@@ -32,4 +32,24 @@ class Article extends Model
         return $this->belongsToMany(User::class, 'article_likes', 'article_id', 'user_id')
             ->withTimestamps();
     }
+
+    public function isLikedBy(User $user): bool
+    {
+        return $this->likedUsers()->where('user_id', $user->id)->exists();
+    }
+
+    public function like(User $user)
+    {
+        $this->likedUsers()->attach($user->id);;
+    }
+
+    public function unlike(User $user)
+    {
+        $this->likedUsers()->detach($user->id);
+    }
+
+    public function likesCount(): int
+    {
+        return $this->likedUsers()->count();
+    }
 }

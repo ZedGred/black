@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Comment extends Model
 {
-    use HasFactory,HasUuids;
+    use HasFactory, HasUuids;
 
     protected $fillable = ['content', 'user_id', 'article_id',];
 
@@ -34,5 +34,18 @@ class Comment extends Model
     {
         return $this->belongsToMany(User::class, 'comment_likes', 'comment_id', 'user_id')
             ->withTimestamps();
+    }
+    public function isLikedBy(User  $user): bool
+    {
+        return $this->likedUsers()->where('user_id', $user->id)->exists();
+    }
+    public function like(User $user)
+    {
+         $this->likedUsers()->attach($user->id);
+    }
+
+    public function unlike(User $user)
+    {
+        $this->likedUsers()->detach($user->id);
     }
 }
