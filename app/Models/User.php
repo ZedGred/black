@@ -57,4 +57,9 @@ class User extends Authenticatable implements JWTSubject
             'permissions' => $this->getAllPermissions()->pluck('name')
         ];
     }
+
+    public static function validRoles(): array
+    {
+        return Role::pluck('name')->toArray(); // ambil semua nama role dari database
+    }
 }

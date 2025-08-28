@@ -3,12 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
-
-use function Psy\debug;
+use App\Helpers\UserHelper;
 
 class FrontendController extends Controller
 {
+    /**
+     * Ambil user login + menu sesuai role
+     */
+    private function getUserAndMenus()
+    {
+        if (auth()->check()) {
+            $authUser = auth()->user();
+            $menus = collect(config('menu'))
+                ->filter(fn($menu) => auth()->user()->can($menu['permissions']))
+                ->toArray();
+
+
+            return [$authUser, $menus];
+        }
+        return [[], []];
+    }
+
     public function showLogin()
     {
         return view('auth.login');
@@ -23,50 +38,69 @@ class FrontendController extends Controller
     {
         return view('landing');
     }
-    public function showDashboard()
-    {
-        $user = auth()->user();
-        $roleName = auth()->user()->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
 
-        return view('pages.home', compact('menus', 'user'));
+    public function showHome()
+    {
+        [$authUser, $menus] = $this->getUserAndMenus();
+
+        return view('pages.homepage.home', compact('menus', 'authUser'));
     }
+
     public function showProfile($username)
     {
-        $username = User::where('name', $username)->firstOrFail();
-        $authUser = auth()->user();
-        $roleName = $authUser->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
+        $profileUser = User::whereRaw('LOWER(name) = ?', [strtolower($username)])->firstOrFail();
+        [$authUser, $menus] = $this->getUserAndMenus();
 
-        return view('pages.profile', [
-            'user' => $authUser,
-            'menus' => $menus,
-            'username' => $username,
-        ]);
+        return view('pages.account.profile', compact('profileUser', 'authUser', 'menus'));
+    }
+
+    public function showProfileAbout($username)
+    {
+        $profileUser = User::whereRaw('LOWER(name) = ?', [strtolower($username)])->firstOrFail();
+        [$authUser, $menus] = $this->getUserAndMenus();
+
+        return view('pages.account.about', compact('profileUser', 'authUser', 'menus'));
     }
 
     public function showRegisterWriter()
     {
-        $user = auth()->user();
-        $roleName = auth()->user()->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
+        [$authUser, $menus] = $this->getUserAndMenus();
 
-        return view('auth.registerwriter', compact('menus', 'user'));
+        return view('pages.account.registerwriter', compact('menus', 'authUser'));
     }
+
     public function showStoryWrite()
     {
-        $user = auth()->user();
-        $roleName = auth()->user()->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
+        [$authUser, $menus] = $this->getUserAndMenus();
 
-        return view('pages.write', compact('menus', 'user'));
+        return view('pages.article.write', compact('menus', 'authUser'));
     }
+
     public function showStoriesPublic()
     {
-        $user = auth()->user();
-        $roleName = auth()->user()->getRoleNames()->first();
-        $menus = config("menu.$roleName", []);
+        [$authUser, $menus] = $this->getUserAndMenus();
 
-        return view('pages.stories', compact('menus', 'user'));
+        return view('pages.stories.published', compact('menus', 'authUser'));
+    }
+
+    public function showStoriesDrafts()
+    {
+        [$authUser, $menus] = $this->getUserAndMenus();
+
+        return view('pages.stories.drafts', compact('menus', 'authUser'));
+    }
+
+    public function showArticle()
+    {
+        [$authUser, $menus] = $this->getUserAndMenus();
+
+        return view('pages.article.index', compact('menus', 'authUser'));
+    }
+
+    public function showUsersPage()
+    {
+        [$authUser, $menus] = $this->getUserAndMenus();
+
+        return view('pages.master.users', compact('menus', 'authUser'));
     }
 }

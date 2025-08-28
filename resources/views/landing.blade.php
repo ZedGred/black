@@ -1,4 +1,4 @@
-@extends('layouts.app') {{-- Pastikan layouts.app menggunakan Metronic --}}
+@extends('layouts.auth') {{-- Pastikan layouts.app menggunakan Metronic --}}
 
 @section('title', 'Black: Read & Discover Hidden Mythic Stories')
 
@@ -23,12 +23,6 @@
                     <ul class="navbar-nav gap-5">
                         <li class="nav-item">
                             <a class="nav-link text-white fs-4" href="{{ route('home') }}">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white fs-4" href="{{ route('home') }}">Author</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white fs-4" href="{{ route('home') }}">Community</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white fs-4" href="{{ route('login') }}">Sign in</a>

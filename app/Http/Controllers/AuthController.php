@@ -7,20 +7,25 @@ use App\Models\User;
 use App\Helpers\JwtHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
     public function registerUser(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:6|confirmed'
+            'password' => 'required|string|min:6|confirmed', 
         ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors()
+            ], 422);
+        }
 
-        // Ubah spasi menjadi underscore
+        $validated = $validator->validated();
         $username = str_replace(' ', '_', $validated['name']);
 
         $user = User::create([
@@ -28,14 +33,11 @@ class AuthController extends Controller
             'email'    => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
-
-        $user->assignRole('user');
-
-        $token = Auth::guard('api')->login($user);
+        $token  = Auth::guard('api')->login($user);
         $cookie = JwtHelper::makeJwtCookie($token);
 
         return response()->json([
-            'status'  => 'success',
+            'success' => true,
             'message' => 'User created successfully',
             'data'    => [
                 'user' => [
@@ -51,6 +53,7 @@ class AuthController extends Controller
             ]
         ])->cookie($cookie);
     }
+
 
 
     public function registerWriter(Request $request)

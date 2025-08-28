@@ -1,4 +1,4 @@
-@extends('dashboard')
+@extends('layout.app')
 
 @section('title', 'Register Writer')
 

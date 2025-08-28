@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,18 +14,9 @@ class CommentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index($articleId)
-    {
-        $comments = Comment::with(['user', 'replies'])
-            ->where('article_id', $articleId)
-            ->whereNull('parent_id')
-            ->orderBy('created_at', 'desc')
-            ->get();
 
-        return Comment::with(['user', 'article'])->paginate(10);
-    }
 
-    public function store(Request $request, \App\Models\Article $article)
+    public function store(Request $request, Article $article)
     {
         $validator = Validator::make($request->all(), [
             'content' => 'required|string',
@@ -43,19 +35,13 @@ class CommentController extends Controller
         $data['article_id'] = $article->id;
 
         $comment = Comment::create($data);
+        $comment->load('user:id,name');
 
         return response()->json([
             'status'  => 'success',
             'message' => 'Comment created successfully',
             'data'    => $comment
         ], 201);
-    }
-
-    public function show(string $id)
-    {
-        $comment = Comment::with(['user', 'article'])->findOrFail($id);
-
-        return response()->json($comment);
     }
 
 

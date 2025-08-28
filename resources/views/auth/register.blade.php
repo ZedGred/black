@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('title', 'Register')
 
@@ -67,6 +67,13 @@
                 <button type="submit" class="btn btn-primary btn-lg w-100 py-4 fw-bold fs-6">
                     Register
                 </button>
+                <!-- Register Section -->
+                <div class="text-center mt-4">
+                    <span class="text-gray-400 fs-6 me-2">Sudah punya akun?</span>
+                    <a href="{{ route('login') }}" class="fw-bold fs-6">
+                        Login
+                    </a>
+                </div>
             </form>
         </div>
     </div>
@@ -96,7 +103,7 @@
 
                 // Kalau sampai sini berarti register sukses
                 alert('Registrasi berhasil! Selamat datang.');
-                window.location.href = '/dashboard';
+                window.location.href = '/home';
 
             } catch (error) {
                 if (error.response && error.response.data) {
