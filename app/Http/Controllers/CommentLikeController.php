@@ -30,7 +30,6 @@ class CommentLikeController extends Controller
 
     public function unlike(Comment $comment)
     {
-        $this->authorize('unlike', $comment);
         $user = auth()->user();
 
         $comment->unlike($user);

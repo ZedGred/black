@@ -28,13 +28,11 @@ class ArticleController extends Controller
 
     public function store(Request $request)
     {
-        Log::debug('test1');
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
         ]);
-        
-        Log::debug('test2');
+
         if ($validator->fails()) {
             Log::debug('test3');
             return response()->json([
@@ -44,14 +42,10 @@ class ArticleController extends Controller
             ], 422);
         }
         
-        Log::debug('test4');
         $data = $validator->validated();
-        Log::debug('test5');
         $data['user_id'] = auth()->id();
         
         $article = Article::create($data);
-        Log::debug('test6');
-
         return response()->json([
             'status' => 'success',
             'message' => 'Article created successfully',
