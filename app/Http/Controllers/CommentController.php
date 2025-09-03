@@ -35,7 +35,15 @@ class CommentController extends Controller
         $data['article_id'] = $article->id;
 
         $comment = Comment::create($data);
-        $comment->load('user:id,name');
+
+        // Eager load user and likes count, and calculate is_liked_by_user efficiently
+        $comment = Comment::with(['user:id,name'])
+            ->withCount('likedUsers') // otomatis bikin kolom liked_users_count
+            ->withExists(['likedUsers as is_liked_by_user' => function ($q) {
+                $q->where('user_id', auth()->id());
+            }])
+            ->findOrFail($comment->id);
+
 
         return response()->json([
             'status'  => 'success',
@@ -60,12 +68,12 @@ class CommentController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
-        
+
         $data = $validator->validated();
         $data['user_id'] = auth()->id();
 
         $comment->update($data);
-        $comment->refresh(); 
+        $comment->refresh();
 
         return response()->json([
             'message' => 'Comment updated successfully',
@@ -84,5 +92,4 @@ class CommentController extends Controller
             'message' => 'Comment deleted successfully'
         ]);
     }
-    
 }

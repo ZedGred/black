@@ -34,6 +34,7 @@ class Comment extends Model
     {
         return $this->belongsToMany(User::class, 'comment_likes', 'comment_id', 'user_id')
             ->withTimestamps();
+            
     }
     public function isLikedBy(User  $user): bool
     {
@@ -47,5 +48,9 @@ class Comment extends Model
     public function unlike(User $user)
     {
         $this->likedUsers()->detach($user->id);
+    }
+    public function likesCount(): int
+    {
+        return $this->likedUsers()->count();
     }
 }
