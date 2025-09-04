@@ -19,6 +19,12 @@ return [
         'permissions' => ['articles.create', 'articles.update'], // bisa lebih dari 1
     ],
     [
+        'title' => 'Library',
+        'route' => 'published',
+        'icon' => 'bi bi-bookmarks-fill',
+        'permissions' => ['articles.view'],
+    ],
+    [
         'title' => 'Stories',
         'route' => 'published',
         'icon' => 'fas fa-book',

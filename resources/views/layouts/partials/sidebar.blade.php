@@ -12,7 +12,7 @@
                 @canany($menu['permissions'])
                     <a href="{{ route($menu['route'], $menu['route'] === 'profile' ? ['username' => Str::slug($authUser->name)] : []) }}"
                         class="nav-link">
-                        <i class="{{ $menu['icon'] }}"></i> {{ $menu['title'] }}
+                        <i class="{{ $menu['icon'] }} text-dark"></i> {{ $menu['title'] }}
                     </a>
                 @endcanany
             @endforeach

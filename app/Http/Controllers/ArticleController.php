@@ -14,6 +14,7 @@ class ArticleController extends Controller
     {
         $articles = Article::with(['user'])
             ->withCount('likedUsers')
+            ->withCount('comments')
             ->orderBy('created_at', 'desc') // terbaru di atas
             ->paginate(10);
 

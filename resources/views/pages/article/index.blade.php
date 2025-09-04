@@ -121,7 +121,6 @@
                                     console.error('Auto-unlike failed:', retryErr);
                                     // Rollback to original state
                                     rollbackUI(btn, likeTextEl, originalLiked, originalCount);
-                                    // alert('Gagal membatalkan like. Silakan coba lagi.');
                                     alert('Gagal membatalkan like. Silakan coba lagi.');
                                 });
                         } else {
@@ -129,12 +128,8 @@
                             rollbackUI(btn, likeTextEl, originalLiked, originalCount);
 
                             // Show appropriate error message
-                            // const errorMessage = err.response?.status === 401 ?
-                            //     'Silakan login terlebih dahulu.' :
-                            //     'Gagal memperbarui like. Silakan coba lagi.';
                             const serverMessage = err.response?.data?.message;
                             alert(id);
-                            // alert(errorMessage);
                         }
                     })
                     .finally(() => {
@@ -177,15 +172,28 @@
                     </button>
                 ` : '';
 
+                // Create clickable author profile with photo
+                const authorProfileHtml = `
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="symbol symbol-35px me-2">
+                            <img src="{{ asset('assets/media/avatars/blank.png') }}" alt="${article.user.name}" class="rounded-circle" />
+                        </div>
+                        <div class="d-flex flex-column justify-content-center">
+                            <a href="http://localhost:8000/${article.user.name}" class="text-decoration-none text-primary fw-semibold">
+                                ${article.user.name}
+                            </a>
+                            <small class="text-muted">${new Date(article.published_at).toLocaleDateString()}</small>
+                        </div>
+                    </div>
+                `;
+
                 container.innerHTML = `
                     <div class="card mb-4">
                         <div class="card-body">
-                            <h2 class="card-title text-center">${article.title}</h2>
-                            <p class="text-muted">
-                                <small>by ${article.user.name} | ${new Date(article.published_at).toLocaleDateString()}</small>
-                            </p>
+                            ${authorProfileHtml}
+                            <h2 class="card-title mb-4">${article.title}</h2>
                             <div class="card-text mt-3">${article.content.replace(/\n/g, '<br>')}</div>
-                            <div class="mt-2 d-flex align-items-center justify-content-start gap-2">
+                            <div class="mt-3 d-flex align-items-center justify-content-start gap-2">
                                 ${likeButtonHtml}
                                 ${commentButtonHtml}
                             </div>
@@ -231,14 +239,27 @@
                         </button>
                     ` : '';
 
+                    // Create comment author profile with photo
+                    const commentAuthorHtml = `
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="symbol symbol-30px me-2">
+                                <img src="{{ asset('assets/media/avatars/blank.png') }}" alt="${c.user.name}" class="rounded-circle" />
+                            </div>
+                            <div class="d-flex flex-column">
+                                <a href="http://localhost:8000/${c.user.name}" class="text-decoration-none text-primary fw-semibold fs-7">
+                                    ${c.user.name}
+                                </a>
+                                <small class="text-muted">${new Date(c.created_at).toLocaleDateString()}</small>
+                            </div>
+                        </div>
+                    `;
+
                     const commentEl = document.createElement('div');
-
                     commentEl.className = 'card mb-2';
-
                     commentEl.innerHTML = `
                         <div class="card-body">
-                            <p class="mb-1">${c.content}</p>
-                            <small>by ${c.user.name} | ${new Date(c.created_at).toLocaleDateString()}</small>
+                            ${commentAuthorHtml}
+                            <p class="mb-2">${c.content}</p>
                             <div class="mt-2 d-flex align-items-center justify-content-start gap-2">
                                 ${likeButtonHtml}
                                 ${commentButtonHtml}
@@ -312,12 +333,26 @@
                                 </button>
                             ` : '';
 
+                            // Create new comment author profile with photo
+                            const newCommentProfilePicture = c.user.profile_picture || "{{ asset('assets/media/avatars/blank.png') }}";
+                            const newCommentAuthorHtml = `
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="symbol symbol-30px me-2">
+                                        <img src="${newCommentProfilePicture}" alt="${c.user.name}" class="rounded-circle" />
+                                    </div>
+                                    <a href="http://localhost:8000/${c.user.name}" class="text-decoration-none text-primary fw-semibold fs-7 me-2">
+                                        ${c.user.name}
+                                    </a>
+                                    <small class="text-muted">${new Date(c.created_at).toLocaleDateString()}</small>
+                                </div>
+                            `;
+
                             const newCommentEl = document.createElement('div');
                             newCommentEl.className = 'card mb-2';
                             newCommentEl.innerHTML = `
                                 <div class="card-body">
-                                    <p class="mb-1">${c.content}</p>
-                                    <small>by ${c.user.name} | ${new Date(c.created_at).toLocaleDateString()}</small>
+                                    ${newCommentAuthorHtml}
+                                    <p class="mb-2">${c.content}</p>
                                     <div class="mt-2 d-flex align-items-center justify-content-start gap-2">
                                         ${likeButtonHtml}
                                         ${commentButtonHtml}
@@ -331,8 +366,7 @@
                             // Attach event listener to new like button
                             const likeBtn = newCommentEl.querySelector('.btn-like');
                             if (likeBtn) {
-                                likeBtn.addEventListener('click', () => toggleLike(likeBtn, 'comment', c
-                                    .id));
+                                likeBtn.addEventListener('click', () => toggleLike(likeBtn, 'comment', c.id));
                             }
 
                             // Reset form
