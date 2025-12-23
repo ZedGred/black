@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { AuthUtils } from "@/lib/auth";
 import toast from "react-hot-toast";
+import AuthLayout from "@/layouts/auth";
 
 type User = {
   email: string;
@@ -54,7 +55,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen flex-row">
+    <AuthLayout>
       {/* Left Side - Banner / Info */}
       <div className="flex w-2/5 items-center justify-center bg-black text-white">
         <h2 className="text-9xl font-bold">BLACK</h2>
@@ -140,6 +141,6 @@ export default function Login() {
           </div>
         </form>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

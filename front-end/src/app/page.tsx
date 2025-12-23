@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Layout from "@/layouts/landing";
-import styles from "@/styles/globals.module.scss";
+import LandingLayout from "@/layouts/landing";
 
-export default function Login() {
+export default function Home() {
   const [count, setCount] = useState<number>(0);
 
   const handleIncrease = () => {
@@ -17,7 +16,7 @@ export default function Login() {
   };
 
   return (
-    <Layout>
+    <LandingLayout>
       <div className="flex min-h-screen items-center justify-center bg-black-100 flex-col space-y-5">
         {/* Gradient Header */}
         <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 h-64 w-full flex items-center justify-center">
@@ -49,6 +48,6 @@ export default function Login() {
             </div>
              */}
       </div>
-    </Layout>
+    </LandingLayout>
   );
 }

@@ -1,3 +1,5 @@
+import { User } from '@/types/user';
+
 export const AuthUtils = {
   setToken: (token: string) => {
     localStorage.setItem('token', token);
@@ -12,7 +14,7 @@ export const AuthUtils = {
   isAuthenticated: (): boolean => {
     return !!localStorage.getItem('token');
   },
-  setUser: (user: any) => {
+  setUser: (user: User) => {
     localStorage.setItem('user', JSON.stringify(user));
   },
   getUser: () => {
