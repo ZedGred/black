@@ -8,6 +8,7 @@ use App\Helpers\JwtHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -169,5 +170,43 @@ class AuthController extends Controller
     public function showLogin()
     {
         return view('login');
+    }
+
+    //======== GOOGLE OAUTH ========
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+
+            $user = User::where('email', $googleUser->email)->first();
+
+            if (!$user) {
+                $username = str_replace(' ', '_', $googleUser->name);
+                $username = $username ?: 'google_user_' . time();
+
+                $user = User::create([
+                    'name'     => $username,
+                    'email'    => $googleUser->email,
+                    'password' => Hash::make(uniqid()),
+                    'google_id' => $googleUser->id,
+                ]);
+            }
+
+            $token = Auth::guard('api')->login($user);
+            $cookie = JwtHelper::makeJwtCookie($token);
+
+            $frontendUrl = config('app.frontend_url', env('APP_URL', 'http://localhost:3000'));
+            
+            return redirect()->to($frontendUrl . '/auth/google/callback?token=' . $token);
+
+        } catch (\Exception $e) {
+            $frontendUrl = config('app.frontend_url', env('APP_URL', 'http://localhost:3000'));
+            return redirect()->to($frontendUrl . '/login?error=google_auth_failed');
+        }
     }
 }

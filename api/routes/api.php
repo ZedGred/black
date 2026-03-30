@@ -29,6 +29,10 @@ Route::post('register/users', [AuthController::class, 'registerUser']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('refresh', [AuthController::class, 'refresh']);
 
+// Google OAuth Routes
+Route::get('auth/google', [AuthController::class, 'redirectToGoogle']);
+Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+
 // Public content
 // Articles
 Route::get('/articles', [ArticleController::class, 'index']);
