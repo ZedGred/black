@@ -15,7 +15,7 @@ class Article extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['title', 'content', 'user_id'];
+    protected $fillable = ['title', 'content', 'user_id', 'status', 'published_at'];
 
     public function user()
     {

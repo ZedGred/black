@@ -15,9 +15,9 @@ class ArticleController extends Controller
         $articles = Article::with(['user'])
             ->withCount('likedUsers')
             ->withCount('comments')
-            ->orderBy('created_at', 'desc') // terbaru di atas
+            ->where('status', 'published')
+            ->orderBy('published_at', 'desc')
             ->paginate(10);
-
 
         return response()->json([
             'status' => 'success',
@@ -32,10 +32,10 @@ class ArticleController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'status' => 'sometimes|in:draft,published',
         ]);
 
         if ($validator->fails()) {
-            Log::debug('test3');
             return response()->json([
                 'status' => 'success',
                 'message' => 'Validation error',
@@ -46,10 +46,21 @@ class ArticleController extends Controller
         $data = $validator->validated();
         $data['user_id'] = auth()->id();
         
+        if (isset($data['status']) && $data['status'] === 'published') {
+            $data['published_at'] = now();
+        } else {
+            $data['status'] = 'draft';
+        }
+        
         $article = Article::create($data);
+        
+        $message = $article->status === 'published' 
+            ? 'Article published successfully' 
+            : 'Draft saved successfully';
+            
         return response()->json([
             'status' => 'success',
-            'message' => 'Article created successfully',
+            'message' => $message,
             'data' => $article
         ], 201);
     }
@@ -142,7 +153,8 @@ class ArticleController extends Controller
     public function userArticle(User $user)
     {
         $data = $user->articles()
-            ->with('user') // eager load penulis
+            ->with('user')
+            ->where('status', 'published')
             ->latest()
             ->paginate(10);
 
@@ -150,6 +162,59 @@ class ArticleController extends Controller
             'status' => 'success',
             'user' => $user->only(['id', 'name', 'email']),
             'data' => $data
+        ]);
+    }
+
+    public function myDrafts(Request $request)
+    {
+        $drafts = Article::where('user_id', auth()->id())
+            ->where('status', 'draft')
+            ->latest()
+            ->paginate(10);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Drafts fetched successfully',
+            'data' => $drafts
+        ]);
+    }
+
+    public function myArticles(Request $request)
+    {
+        $articles = Article::where('user_id', auth()->id())
+            ->where('status', 'published')
+            ->withCount('likedUsers')
+            ->withCount('comments')
+            ->latest()
+            ->paginate(10);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Your published articles fetched successfully',
+            'data' => $articles
+        ]);
+    }
+
+    public function publishDraft(string $id)
+    {
+        $article = Article::where('user_id', auth()->id())->findOrFail($id);
+        
+        if ($article->status === 'published') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Article already published'
+            ], 400);
+        }
+
+        $article->update([
+            'status' => 'published',
+            'published_at' => now()
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Article published successfully',
+            'data' => $article
         ]);
     }
 }

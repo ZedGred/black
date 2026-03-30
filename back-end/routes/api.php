@@ -58,15 +58,20 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/{comment}/like', [CommentLikeController::class, 'unlike'])->middleware('permission:comments.like');
     });
 
-    // Routes  for articles
+    // Routes for articles
     Route::prefix('articles')->group(function () {
         Route::post('/', [ArticleController::class, 'store'])->middleware('permission:articles.create');
         Route::put('/{article}', [ArticleController::class, 'update'])->middleware('permission:articles.update');
         Route::delete('/{article}', [ArticleController::class, 'destroy'])->middleware('permission:articles.delete');
 
-        // Like/unlike Artcile
+        // Like/unlike Article
         Route::post('/{article}/like', [ArticleLikeController::class, 'like'])->middleware('permission:articles.like');
         Route::delete('/{article}/like', [ArticleLikeController::class, 'unlike'])->middleware('permission:articles.like');
+
+        // Draft routes
+        Route::get('/my/drafts', [ArticleController::class, 'myDrafts']);
+        Route::get('/my/articles', [ArticleController::class, 'myArticles']);
+        Route::post('/{article}/publish', [ArticleController::class, 'publishDraft']);
     });
 
     Route::middleware('permission:users.view')->group(function () {
