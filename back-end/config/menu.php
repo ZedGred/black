@@ -36,6 +36,18 @@ return [
         'icon' => 'fas fa-users',
         'permissions' => ['users.view', 'users.create', 'users.update', 'users.delete'],
     ],
+    [
+        'title' => 'Roles',
+        'route' => 'roles.index',
+        'icon' => 'fas fa-user-tag',
+        'permissions' => ['roles.show', 'roles.store', 'roles.update', 'roles.delete'],
+    ],
+    [
+        'title' => 'Permissions',
+        'route' => 'permissions.index',
+        'icon' => 'fas fa-key',
+        'permissions' => ['roles.show'],
+    ],
 ];
 
 

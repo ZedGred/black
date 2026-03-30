@@ -45,6 +45,7 @@ class RolePermissionSeeder extends Seeder
 
         $user->syncPermissions([
             'menu.home',
+            'articles.create',
             'articles.view',
             'articles.like',
             'comments.create',

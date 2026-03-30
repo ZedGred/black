@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PermissionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ArticleController;
@@ -43,7 +44,6 @@ Route::get('/users/{user:name}/articles', [ArticleController::class, 'userArticl
 // Routes for Authenticated Users
 // =============================
 Route::middleware('auth:api')->group(function () {
-    Route::post('register/writer', [AuthController::class, 'registerWriter']);
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
 
@@ -84,12 +84,23 @@ Route::middleware('auth:api')->group(function () {
         });
 
         // Roles
-        // Route::prefix('roles')->group(function () {
-        //     Route::get('/', [RoleController::class, 'index'])->middleware('permission:roles.show');
-        //     Route::get('/{role}', [RoleController::class, 'show'])->middleware('permission:roles.show');
-        //     Route::post('/', [RoleController::class, 'store'])->middleware('permission:roles.store');
-        //     Route::put('/{role}', [RoleController::class, 'update'])->middleware('permission:roles.update');
-        //     Route::delete('/{role}', [RoleController::class, 'destroy'])->middleware('permission:roles.delete');
-        // });
+        Route::prefix('roles')->group(function () {
+            Route::get('/', [RoleController::class, 'index']);
+            Route::post('/', [RoleController::class, 'store']);
+            Route::get('/{role}', [RoleController::class, 'show']);
+            Route::put('/{role}', [RoleController::class, 'update']);
+            Route::delete('/{role}', [RoleController::class, 'destroy']);
+            Route::post('/{role}/permissions', [RoleController::class, 'assignPermissions']);
+            Route::get('/{role}/permissions', [RoleController::class, 'getPermissions']);
+        });
+
+        // Permissions
+        Route::prefix('permissions')->group(function () {
+            Route::get('/', [PermissionController::class, 'index']);
+            Route::post('/', [PermissionController::class, 'store']);
+            Route::get('/{permission}', [PermissionController::class, 'show']);
+            Route::put('/{permission}', [PermissionController::class, 'update']);
+            Route::delete('/{permission}', [PermissionController::class, 'destroy']);
+        });
     });
 });
