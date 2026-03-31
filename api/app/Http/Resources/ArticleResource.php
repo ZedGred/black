@@ -23,6 +23,7 @@ class ArticleResource extends JsonResource
             'comments_count'     => $this->comments_count ?? 0,
             'liked_by_user'      => $this->liked_by_user ?? false,
             'author'             => $this->whenLoaded('user', fn () => new UserResource($this->user)),
+            'category'           => $this->whenLoaded('category', fn () => new CategoryResource($this->category)),
             'comments'           => CommentResource::collection($this->whenLoaded('comments')),
         ];
     }

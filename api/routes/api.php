@@ -9,6 +9,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ArticleLikeController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
+use App\Http\Controllers\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,10 @@ Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback
 Route::get('/articles', [ArticleController::class, 'index']);
 Route::get('/articles/{article}', [ArticleController::class, 'show']);
 Route::get('/articles/{article}/comments', [CommentController::class, 'index']);
+
+// Categories
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{category}', [CategoryController::class, 'show']);
 
 // Articles milik user tertentu (by username)
 Route::get('/users/{user:name}/articles', [ArticleController::class, 'userArticle']);
@@ -113,6 +118,13 @@ Route::middleware('auth:api')->group(function () {
             Route::get('/{permission}', [PermissionController::class, 'show']);
             Route::put('/{permission}', [PermissionController::class, 'update']);
             Route::delete('/{permission}', [PermissionController::class, 'destroy']);
+        });
+
+        // Categories (CRUD - all authenticated users)
+        Route::prefix('categories')->group(function () {
+            Route::post('/', [CategoryController::class, 'store']);
+            Route::put('/{category}', [CategoryController::class, 'update']);
+            Route::delete('/{category}', [CategoryController::class, 'destroy']);
         });
     });
 });

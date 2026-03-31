@@ -13,7 +13,7 @@ class ArticleService
      */
     public function getPublishedArticles(int $perPage = 10): LengthAwarePaginator
     {
-        return Article::with(['user'])
+        return Article::with(['user', 'category'])
             ->withCount('likedUsers')
             ->withCount('comments')
             ->where('status', 'published')
@@ -26,7 +26,7 @@ class ArticleService
      */
     public function getArticleDetail(string $id, ?string $authUserId = null): Article
     {
-        $article = Article::with(['user'])
+        $article = Article::with(['user', 'category'])
             ->withCount('likedUsers')
             ->withCount(['likedUsers as liked_by_user_count' => function ($q) use ($authUserId) {
                 if ($authUserId) {

@@ -15,11 +15,16 @@ class Article extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['title', 'content', 'user_id', 'status', 'published_at'];
+    protected $fillable = ['title', 'content', 'user_id', 'category_id', 'status', 'published_at'];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 
     public function comments()
