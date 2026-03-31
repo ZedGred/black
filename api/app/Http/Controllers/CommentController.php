@@ -2,94 +2,59 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Comment;
+use App\Http\Requests\Comment\StoreCommentRequest;
+use App\Http\Requests\Comment\UpdateCommentRequest;
+use App\Http\Resources\CommentResource;
 use App\Models\Article;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Comment;
+use App\Services\CommentService;
 
 class CommentController extends Controller
 {
+    public function __construct(protected CommentService $commentService) {}
 
-
-    /**
-     * Display a listing of the resource.
-     */
-
-
-    public function store(Request $request, Article $article)
+    // POST /api/comments/articles/{article}
+    public function store(StoreCommentRequest $request, Article $article)
     {
-        $validator = Validator::make($request->all(), [
-            'content' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Validation error',
-                'errors'  => $validator->errors()
-            ], 422);
-        }
-
-        $data = $validator->validated();
-        $data['user_id'] = auth()->id();
-        $data['article_id'] = $article->id;
-
-        $comment = Comment::create($data);
-
-        // Eager load user and likes count, and calculate is_liked_by_user efficiently
-        $comment = Comment::with(['user:id,name'])
-            ->withCount('likedUsers') // otomatis bikin kolom liked_users_count
-            ->withExists(['likedUsers as is_liked_by_user' => function ($q) {
-                $q->where('user_id', auth()->id());
-            }])
-            ->findOrFail($comment->id);
-
+        $comment = $this->commentService->create(
+            $article,
+            auth()->id(),
+            $request->validated('content')
+        );
 
         return response()->json([
             'status'  => 'success',
             'message' => 'Comment created successfully',
-            'data'    => $comment
+            'data'    => new CommentResource($comment),
         ], 201);
     }
 
-
-    public function update(Request $request, string $id)
+    // PUT /api/comments/{comment}
+    public function update(UpdateCommentRequest $request, string $id)
     {
         $comment = Comment::findOrFail($id);
         $this->authorize('update', $comment);
 
-        $validator = Validator::make($request->all(), [
-            'content' => 'sometimes|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $data = $validator->validated();
-        $data['user_id'] = auth()->id();
-
-        $comment->update($data);
-        $comment->refresh();
+        $comment = $this->commentService->update($comment, $request->validated());
 
         return response()->json([
+            'status'  => 'success',
             'message' => 'Comment updated successfully',
-            'data' => $comment
+            'data'    => new CommentResource($comment),
         ]);
     }
 
+    // DELETE /api/comments/{comment}
     public function destroy(string $id)
     {
         $comment = Comment::findOrFail($id);
         $this->authorize('delete', $comment);
-        $comment->delete();
+
+        $this->commentService->delete($comment);
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Comment deleted successfully'
+            'message' => 'Comment deleted successfully',
         ]);
     }
 }

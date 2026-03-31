@@ -1,4 +1,3 @@
-
 <?php
 
 use App\Http\Controllers\RoleController;
@@ -7,7 +6,7 @@ use App\Http\Controllers\PermissionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ArticleController;
-use App\Http\Controllers\ArticleLIkeController;
+use App\Http\Controllers\ArticleLikeController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
 
@@ -23,24 +22,28 @@ use App\Http\Controllers\CommentLikeController;
 */
 
 // =============================
-// Public Auth Routes
+// Public Auth Routes (Rate limited: 10/min)
 // =============================
-Route::post('register/users', [AuthController::class, 'registerUser']);
-Route::post('login', [AuthController::class, 'login']);
-Route::post('refresh', [AuthController::class, 'refresh']);
+Route::middleware('throttle:auth')->group(function () {
+    Route::post('register/users', [AuthController::class, 'registerUser']);
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('refresh/token', [AuthController::class, 'refreshToken']);
+    Route::post('refresh', [AuthController::class, 'refresh']);
+});
 
 // Google OAuth Routes
 Route::get('auth/google', [AuthController::class, 'redirectToGoogle']);
 Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
-// Public content
+// =============================
+// Public Content Routes
+// =============================
 // Articles
 Route::get('/articles', [ArticleController::class, 'index']);
 Route::get('/articles/{article}', [ArticleController::class, 'show']);
 Route::get('/articles/{article}/comments', [CommentController::class, 'index']);
 
-// Stories milik user tertentu
-// routes/web.php atau api.php
+// Articles milik user tertentu (by username)
 Route::get('/users/{user:name}/articles', [ArticleController::class, 'userArticle']);
 
 
@@ -51,8 +54,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
 
-    // Routes for comments
-    Route::prefix('comments')->group(function () {
+    // Routes for comments (write throttle: 30/min)
+    Route::prefix('comments')->middleware('throttle:write')->group(function () {
         Route::post('/articles/{article}', [CommentController::class, 'store'])->middleware('permission:comments.create');
         Route::put('/{comment}', [CommentController::class, 'update'])->middleware('permission:comments.update');
         Route::delete('/{comment}', [CommentController::class, 'destroy'])->middleware('permission:comments.delete');
@@ -62,10 +65,10 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/{comment}/like', [CommentLikeController::class, 'unlike'])->middleware('permission:comments.like');
     });
 
-    // Routes for articles
+    // Routes for articles (write throttle: 30/min)
     Route::prefix('articles')->group(function () {
-        Route::post('/', [ArticleController::class, 'store'])->middleware('permission:articles.create');
-        Route::put('/{article}', [ArticleController::class, 'update'])->middleware('permission:articles.update');
+        Route::post('/', [ArticleController::class, 'store'])->middleware(['permission:articles.create', 'throttle:write']);
+        Route::put('/{article}', [ArticleController::class, 'update'])->middleware(['permission:articles.update', 'throttle:write']);
         Route::delete('/{article}', [ArticleController::class, 'destroy'])->middleware('permission:articles.delete');
 
         // Like/unlike Article

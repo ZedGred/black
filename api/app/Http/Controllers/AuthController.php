@@ -2,122 +2,67 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RefreshTokenRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
-use App\Helpers\JwtHelper;
+use App\Services\AuthService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Hash;
+use App\Helpers\JwtHelper;
 
 class AuthController extends Controller
 {
-    public function registerUser(Request $request)
+    public function __construct(protected AuthService $authService) {}
+
+    // =============================
+    // Register
+    // =============================
+    public function registerUser(RegisterRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:6|confirmed', 
-        ]);
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors'  => $validator->errors()
-            ], 422);
-        }
+        $result = $this->authService->register($request->validated());
 
-        $validated = $validator->validated();
-        $username = str_replace(' ', '_', $validated['name']);
-
-        $user = User::create([
-            'name'     => $username,
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
-        $token  = Auth::guard('api')->login($user);
-        $cookie = JwtHelper::makeJwtCookie($token);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully',
-            'data'    => [
-                'user' => [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
-                    'email' => $user->email,
-                ],
-                'token' => [
-                    'access_token' => $token,
-                    'token_type'   => 'Bearer',
-                    'expires_in'   => auth('api')->factory()->getTTL() * 60
-                ],
-            ]
-        ])->cookie($cookie);
+        return response()
+            ->json($result['response'], 201)
+            ->cookie($result['cookie']);
     }
 
-
-    public function login(Request $request)
+    // =============================
+    // Login
+    // =============================
+    public function login(LoginRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 422);
-        }
-
-        $credentials = $request->only('email', 'password');
-        $token = Auth::guard('api')->attempt($credentials);
-        if (!$token) {
+        try {
+            $result = $this->authService->login($request->only('email', 'password'));
+        } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid email or password',
-            ], 401);
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ], $e->getCode() ?: 401);
         }
 
-        $user = Auth::guard('api')->user();
-        $cookie = JwtHelper::makeJwtCookie($token);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'User logged in successfully',
-            'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                ],
-                'token' => [
-                    'access_token' => $token,
-                    'token_type' => 'Bearer',
-                    'expires_in' => auth('api')->factory()->getTTL() * 60
-                ]
-            ]
-        ])->cookie($cookie);
+        return response()
+            ->json($result['response'])
+            ->cookie($result['cookie']);
     }
 
+    // =============================
+    // Logout
+    // =============================
     public function logout()
     {
         Auth::guard('api')->logout();
+
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Successfully logged out',
         ]);
     }
 
-    /*public function me()
-    {
-        $user = auth()->user();
-        if (!$user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized'
-            ], 301);
-        }
-
-        return response()->json($user);
-    }*/
+    // =============================
+    // Me (get authenticated user)
+    // =============================
     public function me()
     {
         $user = Auth::guard('api')->user();
@@ -125,54 +70,73 @@ class AuthController extends Controller
         if (! $user) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Unauthorized'
+                'message' => 'Unauthorized',
             ], 401);
         }
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'User data retrieved successfully',
-            'data' => [
-                'user'        => $user->only('id', 'name', 'email'),
+            'data'    => [
+                'user'        => [
+                    'id'    => $user->id,
+                    'name'  => $user->name,
+                    'email' => $user->email,
+                ],
                 'permissions' => $user->getAllPermissions()->pluck('name'),
                 'roles'       => $user->getRoleNames(),
             ],
-        ], 200);
+        ]);
     }
 
+    // =============================
+    // Refresh Token (via DB table)
+    // =============================
+    public function refreshToken(RefreshTokenRequest $request)
+    {
+        try {
+            $response = $this->authService->rotateRefreshToken($request->refresh_token);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getCode() ?: 401);
+        }
 
+        return response()->json($response);
+    }
+
+    // =============================
+    // Refresh Token (JWT native)
+    // =============================
     public function refresh()
     {
         try {
             $newToken = Auth::guard('api')->refresh();
 
             return response()->json([
-                'status' => 'success',
+                'status'  => 'success',
                 'message' => 'Token refreshed successfully',
-                "data" => [
-                    'user' => Auth::guard('api')->user(),
+                'data'    => [
+                    'user'  => Auth::guard('api')->user(),
                     'token' => [
                         'access_token' => $newToken,
                         'token_type'   => 'Bearer',
                         'expires_in'   => auth('api')->factory()->getTTL() * 60,
                     ],
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Token is invalid or has expired'
+                'status'  => 'error',
+                'message' => 'Token is invalid or has expired',
             ], 401);
         }
     }
 
-    //======== SHOW ========
-    public function showLogin()
-    {
-        return view('login');
-    }
-
-    //======== GOOGLE OAUTH ========
+    // =============================
+    // Google OAuth
+    // =============================
     public function redirectToGoogle()
     {
         return Socialite::driver('google')->redirect();
@@ -185,28 +149,39 @@ class AuthController extends Controller
 
             $user = User::where('email', $googleUser->email)->first();
 
-            if (!$user) {
-                $username = str_replace(' ', '_', $googleUser->name);
-                $username = $username ?: 'google_user_' . time();
+            if (! $user) {
+                $username = str_replace(' ', '_', $googleUser->name) ?: 'google_user_' . time();
 
                 $user = User::create([
-                    'name'     => $username,
-                    'email'    => $googleUser->email,
-                    'password' => Hash::make(uniqid()),
+                    'name'      => $username,
+                    'email'     => $googleUser->email,
+                    'password'  => Hash::make(uniqid()),
                     'google_id' => $googleUser->id,
                 ]);
             }
 
-            $token = Auth::guard('api')->login($user);
+            $token  = Auth::guard('api')->login($user);
             $cookie = JwtHelper::makeJwtCookie($token);
 
             $frontendUrl = config('app.frontend_url', env('APP_URL', 'http://localhost:3000'));
-            
-            return redirect()->to($frontendUrl . '/auth/google/callback?token=' . $token);
 
+            return redirect()->to($frontendUrl . '/auth/google/callback?token=' . $token);
         } catch (\Exception $e) {
             $frontendUrl = config('app.frontend_url', env('APP_URL', 'http://localhost:3000'));
             return redirect()->to($frontendUrl . '/login?error=google_auth_failed');
         }
+    }
+
+    // =============================
+    // Admin: list all users
+    // =============================
+    public function listUsers()
+    {
+        $users = User::with('roles')->paginate(10);
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => $users,
+        ]);
     }
 }

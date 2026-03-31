@@ -2,10 +2,13 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Spatie\Permission\Exceptions\UnauthorizedException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -53,12 +56,28 @@ class Handler extends ExceptionHandler
                 ], 403);
             }
 
+            // Handle Laravel Policy/Gate authorization errors
+            if ($e instanceof AuthorizationException) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => $e->getMessage() ?: 'This action is unauthorized.',
+                ], 403);
+            }
+
             // Handle duplicate key/unique constraint database errors
             if ($e instanceof UniqueConstraintViolationException) {
                 return response()->json([
                     'status'  => 'error',
                     'message' => 'Duplicate entry: the data already exists.',
                 ], 422);
+            }
+
+            // Handle JWT authentication errors (missing/invalid/expired token)
+            if ($e instanceof JWTException || $e instanceof AuthenticationException) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Unauthenticated. Please login first.',
+                ], 401);
             }
 
             // Handle all other exceptions
