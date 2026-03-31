@@ -10,6 +10,8 @@ use App\Http\Controllers\ArticleLikeController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\FollowController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,6 +53,10 @@ Route::get('/categories/{category}', [CategoryController::class, 'show']);
 // Articles milik user tertentu (by username)
 Route::get('/users/{user:name}/articles', [ArticleController::class, 'userArticle']);
 
+// Followers (public)
+Route::get('/users/{user:name}/followers', [FollowController::class, 'followers']);
+Route::get('/users/{user:name}/following', [FollowController::class, 'following']);
+
 
 // =============================
 // Routes for Authenticated Users
@@ -58,6 +64,21 @@ Route::get('/users/{user:name}/articles', [ArticleController::class, 'userArticl
 Route::middleware('auth:api')->group(function () {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
+
+    // Follow/Unfollow
+    Route::post('/follow', [FollowController::class, 'follow']);
+    Route::post('/unfollow', [FollowController::class, 'unfollow']);
+    Route::get('/users/{user:name}/follow/check', [FollowController::class, 'checkFollow']);
+
+    // Notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::get('/{notification}', [NotificationController::class, 'show']);
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+        Route::delete('/{notification}', [NotificationController::class, 'delete']);
+    });
 
     // Routes for comments (write throttle: 30/min)
     Route::prefix('comments')->middleware('throttle:write')->group(function () {

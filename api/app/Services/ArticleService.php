@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Models\Article;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ArticleService
 {
+    public function __construct(protected NotificationService $notificationService) {}
     /**
      * Get paginated published articles.
      */
@@ -63,14 +65,30 @@ class ArticleService
     public function create(array $data, string $userId): Article
     {
         $data['user_id'] = $userId;
+        $sendNotification = false;
 
         if (isset($data['status']) && $data['status'] === 'published') {
             $data['published_at'] = now();
+            $sendNotification = true;
         } else {
             $data['status'] = 'draft';
         }
 
-        return Article::create($data);
+        $article = Article::create($data);
+
+        if ($sendNotification) {
+            $author = User::find($userId);
+            $this->notificationService->notifyFollowers(
+                $author,
+                'article',
+                'New article from ' . $author->name,
+                $article->title,
+                Article::class,
+                $article->id
+            );
+        }
+
+        return $article;
     }
 
     /**
@@ -147,6 +165,16 @@ class ArticleService
             'status'       => 'published',
             'published_at' => now(),
         ]);
+
+        $author = User::find($userId);
+        $this->notificationService->notifyFollowers(
+            $author,
+            'article',
+            'New article from ' . $author->name,
+            $article->title,
+            Article::class,
+            $article->id
+        );
 
         return $article;
     }

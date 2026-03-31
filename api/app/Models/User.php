@@ -43,6 +43,43 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsToMany(Comment::class, 'comment_likes');
     }
 
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'followers', 'following_id', 'follower_id')
+            ->withTimestamps();
+    }
+
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'followers', 'follower_id', 'following_id')
+            ->withTimestamps();
+    }
+
+    public function isFollowing(User $user): bool
+    {
+        return $this->following()->where('following_id', $user->id)->exists();
+    }
+
+    public function followersCount(): int
+    {
+        return $this->followers()->count();
+    }
+
+    public function followingCount(): int
+    {
+        return $this->following()->count();
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
+    }
+
+    public function unreadNotificationsCount(): int
+    {
+        return $this->notifications()->unread()->count();
+    }
+
 
     public function getJWTIdentifier()
     {
