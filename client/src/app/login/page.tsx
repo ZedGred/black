@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { AuthUtils } from '@/lib/auth';
+import { authService } from '@/services/auth.service';
 import toast from 'react-hot-toast';
 import AuthLayout from '@/layouts/auth';
 
@@ -28,21 +29,16 @@ export default function Login() {
     setError(null);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      toast.success('berhasil');
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
+      const response = await authService.login(form);
+      
+      if (!response.success) {
+        throw new Error(response.message);
       }
 
-      AuthUtils.setToken(data.data.token.access_token);
+      AuthUtils.setToken(response.data.token.access_token);
+      AuthUtils.setUser(response.data.user);
 
-      toast.success('Login berhasil!');
+      toast.success('Login successful!');
       router.push('/');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -121,7 +117,7 @@ export default function Login() {
           </div>
 
           <a
-            href={`${process.env.NEXT_PUBLIC_URL}/api/auth/google`}
+            href={`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/google`}
             className="flex w-full items-center justify-center gap-2 rounded-3xl border border-gray-500 bg-transparent px-4 py-2 font-semibold text-white transition hover:bg-gray-800"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">

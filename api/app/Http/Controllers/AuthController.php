@@ -36,10 +36,11 @@ class AuthController extends Controller
         try {
             $result = $this->authService->login($request->only('email', 'password'));
         } catch (\Exception $e) {
+            $statusCode = is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() <= 599 ? $e->getCode() : 500;
             return response()->json([
                 'status'  => 'error',
                 'message' => $e->getMessage(),
-            ], $e->getCode() ?: 401);
+            ], $statusCode);
         }
 
         return response()
@@ -97,10 +98,11 @@ class AuthController extends Controller
         try {
             $response = $this->authService->rotateRefreshToken($request->refresh_token);
         } catch (\Exception $e) {
+            $statusCode = is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() <= 599 ? $e->getCode() : 500;
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-            ], $e->getCode() ?: 401);
+            ], $statusCode);
         }
 
         return response()->json($response);
@@ -139,13 +141,26 @@ class AuthController extends Controller
     // =============================
     public function redirectToGoogle()
     {
+        $redirectUrl = url('/api/v1/auth/google/callback');
+        config(['services.google.redirect' => $redirectUrl]);
+        
         return Socialite::driver('google')->redirect();
     }
 
     public function handleGoogleCallback()
     {
         try {
+            $redirectUrl = url('/api/v1/auth/google/callback');
+            config(['services.google.redirect' => $redirectUrl]);
+            
+            // Pass guzzle options to disable SSL verification
             $googleUser = Socialite::driver('google')->stateless()->user();
+            
+            \Illuminate\Support\Facades\Log::info('Google user:', [
+                'id' => $googleUser->id,
+                'email' => $googleUser->email,
+                'name' => $googleUser->name,
+            ]);
 
             $user = User::where('email', $googleUser->email)->first();
 
@@ -163,11 +178,13 @@ class AuthController extends Controller
             $token  = Auth::guard('api')->login($user);
             $cookie = JwtHelper::makeJwtCookie($token);
 
-            $frontendUrl = config('app.frontend_url', env('APP_URL', 'http://localhost:3000'));
+            $frontendUrl = config('app.frontend_url', 'http://localhost:3002');
 
             return redirect()->to($frontendUrl . '/auth/google/callback?token=' . $token);
         } catch (\Exception $e) {
-            $frontendUrl = config('app.frontend_url', env('APP_URL', 'http://localhost:3000'));
+            \Illuminate\Support\Facades\Log::error('Google auth failed: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error($e->getTraceAsString());
+            $frontendUrl = config('app.frontend_url', 'http://localhost:3002');
             return redirect()->to($frontendUrl . '/login?error=google_auth_failed');
         }
     }

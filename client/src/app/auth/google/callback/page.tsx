@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthUtils } from '@/lib/auth';
+import { authService } from '@/services/auth.service';
 
 export default function GoogleCallback() {
   const router = useRouter();
@@ -18,7 +19,18 @@ export default function GoogleCallback() {
 
     if (token) {
       AuthUtils.setToken(token);
-      router.push('/');
+      
+      authService.me()
+        .then((res) => {
+          AuthUtils.setUser(res.data);
+        })
+        .catch(() => {
+          AuthUtils.removeToken();
+          router.push('/login?error=google_auth_failed');
+        })
+        .finally(() => {
+          router.push('/');
+        });
     } else {
       router.push('/login?error=no_token');
     }
@@ -26,7 +38,7 @@ export default function GoogleCallback() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-950">
-      <div className="text-white">Processing login...</div>
+      <div className="text-white">Processing Google login...</div>
     </div>
   );
 }

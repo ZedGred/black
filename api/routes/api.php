@@ -35,8 +35,10 @@ Route::middleware('throttle:auth')->group(function () {
 });
 
 // Google OAuth Routes
-Route::get('auth/google', [AuthController::class, 'redirectToGoogle']);
-Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+Route::middleware('web')->group(function () {
+    Route::get('auth/google', [AuthController::class, 'redirectToGoogle']);
+    Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+});
 
 // =============================
 // Public Content Routes
