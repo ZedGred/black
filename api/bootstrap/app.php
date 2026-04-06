@@ -15,6 +15,10 @@ $app = new Illuminate\Foundation\Application(
     $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
 );
 
+if (isset($_ENV['SERVER_PORT']) || isset($_SERVER['SERVER_PORT'])) {
+    $_SERVER['SERVER_PORT'] = $_ENV['SERVER_PORT'] ?? $_SERVER['SERVER_PORT'];
+}
+
 /*
 |--------------------------------------------------------------------------
 | Bind Important Interfaces

@@ -23,6 +23,23 @@ class AuthController extends Controller
     {
         $result = $this->authService->register($request->validated());
 
+        return response()->json($result, 201);
+    }
+
+    // =============================
+    // Verify & Set Password
+    // =============================
+    public function verifyEmailPassword(\App\Http\Requests\Auth\VerifyPasswordRequest $request)
+    {
+        try {
+            $result = $this->authService->verifyPassword($request->token, $request->password);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+
         return response()
             ->json($result['response'], 201)
             ->cookie($result['cookie']);
@@ -36,11 +53,10 @@ class AuthController extends Controller
         try {
             $result = $this->authService->login($request->only('email', 'password'));
         } catch (\Exception $e) {
-            $statusCode = is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() <= 599 ? $e->getCode() : 500;
             return response()->json([
-                'status'  => 'error',
+                'success' => false,
                 'message' => $e->getMessage(),
-            ], $statusCode);
+            ], 401);
         }
 
         return response()
@@ -178,13 +194,13 @@ class AuthController extends Controller
             $token  = Auth::guard('api')->login($user);
             $cookie = JwtHelper::makeJwtCookie($token);
 
-            $frontendUrl = config('app.frontend_url', 'http://localhost:3002');
+            $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
 
             return redirect()->to($frontendUrl . '/auth/google/callback?token=' . $token);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Google auth failed: ' . $e->getMessage());
             \Illuminate\Support\Facades\Log::error($e->getTraceAsString());
-            $frontendUrl = config('app.frontend_url', 'http://localhost:3002');
+            $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
             return redirect()->to($frontendUrl . '/login?error=google_auth_failed');
         }
     }

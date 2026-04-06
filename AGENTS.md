@@ -111,3 +111,5 @@ php artisan make:resource ResourceName
 # Create service
 # Just create manually in app/Services/
 ```
+
+## purpose

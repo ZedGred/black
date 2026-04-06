@@ -4,7 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RegisterRequest extends FormRequest
+class VerifyPasswordRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,18 +14,15 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'     => 'required|string|max:255|unique:users,name',
-            'email'    => 'required|string|email|max:255|unique:users,email',
+            'token'    => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'name.required'      => 'Nama wajib diisi.',
-            'email.required'     => 'Email wajib diisi.',
-            'email.email'        => 'Format email tidak valid.',
-            'email.unique'       => 'Email sudah terdaftar.',
+            'token.required'     => 'Token verifikasi wajib diisi.',
             'password.required'  => 'Password wajib diisi.',
             'password.min'       => 'Password minimal 6 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',

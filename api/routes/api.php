@@ -29,6 +29,7 @@ use App\Http\Controllers\NotificationController;
 // =============================
 Route::middleware('throttle:auth')->group(function () {
     Route::post('register/users', [AuthController::class, 'registerUser']);
+    Route::post('register/verify', [AuthController::class, 'verifyEmailPassword']);
     Route::post('login', [AuthController::class, 'login']);
     Route::post('refresh/token', [AuthController::class, 'refreshToken']);
     Route::post('refresh', [AuthController::class, 'refresh']);
