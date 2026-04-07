@@ -9,7 +9,12 @@ import { notificationService } from "@/services/notification.service";
 import { Bell, Menu, X, User, LogOut, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function Navbar() {
+type Props = {
+  sidebarExpanded?: boolean;
+  onToggleSidebar?: () => void;
+}
+
+export default function Navbar({ sidebarExpanded = false, onToggleSidebar }: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<{ name: string; avatar?: string; username: string } | null>(null);
@@ -51,8 +56,16 @@ export default function Navbar() {
 
   return (
     <nav className="fixed w-full p-[var(--spacing-gr-md)] bg-black/90 text-white flex justify-between items-center border-b border-gray-800 backdrop-blur-md z-50">
-      <div className="text-2xl font-bold" style={{ padding: '0 var(--spacing-gr-md)' }}>
-        <Link href="/">Black</Link>
+      <div className="flex items-center gap-3" style={{ padding: '0 var(--spacing-gr-md)' }}>
+        <button 
+          onClick={onToggleSidebar}
+          className="flex flex-col gap-1.5 p-2 hover:bg-gray-800 rounded-lg transition-colors"
+        >
+          <span className="w-5 h-0.5 bg-white rounded-full"></span>
+          <span className="w-5 h-0.5 bg-white rounded-full"></span>
+          <span className="w-5 h-0.5 bg-white rounded-full"></span>
+        </button>
+        <Link href="/" className="text-2xl font-bold">Black</Link>
       </div>
 
       {/* Desktop Navigation */}

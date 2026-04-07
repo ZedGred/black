@@ -9,6 +9,7 @@ type Props = { children: ReactNode }
 export default function LandingLayout({ children }: Props) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
   useEffect(() => {
     const token = AuthUtils.getToken();
@@ -20,11 +21,11 @@ export default function LandingLayout({ children }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col bg-black">
-      <Navbar />
+      <Navbar sidebarExpanded={sidebarExpanded} onToggleSidebar={() => setSidebarExpanded(!sidebarExpanded)} />
       {isLoggedIn ? (
         <div className="flex">
-          <Sidebar />
-          <main className="flex-1 ml-[72px] min-h-screen transition-all duration-300">
+          <Sidebar isExpanded={sidebarExpanded} onToggle={() => setSidebarExpanded(!sidebarExpanded)} />
+          <main className={`flex-1 ml-[72px] min-h-screen transition-all duration-300 ${sidebarExpanded ? 'lg:ml-64' : ''}`}>
             {children}
           </main>
         </div>
