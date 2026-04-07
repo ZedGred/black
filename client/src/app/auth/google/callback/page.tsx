@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthUtils } from '@/lib/auth';
 import { authService } from '@/services/auth.service';
+import Loading from '@/app/loading';
 
-export default function GoogleCallback() {
+function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -36,9 +37,14 @@ export default function GoogleCallback() {
     }
   }, [token, error, router]);
 
+  return null;
+}
+
+export default function GoogleCallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-950">
-      <div className="text-white">Processing Google login...</div>
-    </div>
+    <Suspense fallback={<Loading />}>
+      <Loading />
+      <GoogleCallbackContent />
+    </Suspense>
   );
 }

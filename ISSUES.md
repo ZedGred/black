@@ -81,3 +81,8 @@ the design of verivy email is very bad you need add time like 60 second to expir
 i have problem when attempt veryvy code and get this message Invalid or expired verification code. idk why but i think isnt correct because not 1 minute yet
 
 # 4/6/2026 13
+I want to make a professional loading screen where the loading animation looks like it's writing the word "BLACK".
+
+# 4/6/2026 14
+**Google Login Callback UI:**
+Saat ini, halaman callback untuk Google login (`/auth/google/callback`) masih menampilkan teks biasa (seperti "Processing..."). Tolong ubah dan gunakan komponen loading screen `BLACK` yang baru agar desain terlihat lebih profesional dan konsisten.
