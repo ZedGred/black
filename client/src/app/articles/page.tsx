@@ -42,11 +42,11 @@ export default function ArticlesPage() {
 
   return (
     <LandingLayout>
-      <div className="pt-24 pb-12 px-4 max-w-6xl mx-auto">
+      <div className="pt-24 pb-12 px-4 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-white">Articles</h1>
+          <h1 className="text-4xl font-bold text-white">Stories</h1>
           <Link href="/articles/create" className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-200">
-            Write Article
+            Write Story
           </Link>
         </div>
 
@@ -54,52 +54,52 @@ export default function ArticlesPage() {
           <div className="text-center text-gray-400 py-12">Loading...</div>
         ) : articles.length === 0 ? (
           <div className="text-center text-gray-400 py-12">
-            <p className="text-xl">No articles found</p>
+            <p className="text-xl">No stories yet</p>
             <Link href="/articles/create" className="text-blue-400 hover:underline mt-2 inline-block">
-              Be the first to write an article!
+              Be the first to write a story!
             </Link>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-12">
             {articles.map((article) => (
               <Link
                 key={article.id}
                 href={`/articles/${article.slug || article.id}`}
-                className="bg-gray-900 rounded-lg overflow-hidden hover:bg-gray-800 transition border border-gray-800"
+                className="block group"
               >
                 {article.thumbnail && (
-                  <div className="h-48 overflow-hidden">
+                  <div className="mb-4 overflow-hidden rounded-lg">
                     <img
                       src={article.thumbnail}
                       alt={article.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-64 object-cover group-hover:opacity-90 transition-opacity"
                     />
                   </div>
                 )}
-                <div className="p-4">
+                <div>
                   {article.categories && article.categories.length > 0 && (
-                    <span className="text-xs text-blue-400">
+                    <span className="text-sm font-medium text-green-600">
                       {article.categories[0].name}
                     </span>
                   )}
-                  <h2 className="text-xl font-semibold text-white mt-2 line-clamp-2">
+                  <h2 className="text-2xl font-bold text-white mt-1 group-hover:text-gray-200 transition-colors">
                     {article.title}
                   </h2>
                   {article.excerpt && (
-                    <p className="text-gray-400 text-sm mt-2 line-clamp-2">
+                    <p className="text-gray-400 mt-2 line-clamp-3">
                       {article.excerpt}
                     </p>
                   )}
                   <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
                         {article.user?.avatar ? (
-                          <img src={article.user.avatar} alt="" className="w-full h-full rounded-full" />
+                          <img src={article.user.avatar} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-xs">{article.user?.name?.[0]}</span>
+                          <span className="text-sm">{article.user?.name?.[0]}</span>
                         )}
                       </div>
-                      <span>{article.user?.name}</span>
+                      <span className="text-gray-300">{article.user?.name}</span>
                     </div>
                     <span>
                       {article.published_at
@@ -114,7 +114,7 @@ export default function ArticlesPage() {
         )}
 
         {hasMore && (
-          <div className="text-center mt-8">
+          <div className="text-center mt-12">
             <button
               onClick={() => setPage((p) => p + 1)}
               disabled={loading}

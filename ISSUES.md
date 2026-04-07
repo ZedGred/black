@@ -86,3 +86,12 @@ I want to make a professional loading screen where the loading animation looks l
 # 4/6/2026 14
 **Google Login Callback UI:**
 Saat ini, halaman callback untuk Google login (`/auth/google/callback`) masih menampilkan teks biasa (seperti "Processing..."). Tolong ubah dan gunakan komponen loading screen `BLACK` yang baru agar desain terlihat lebih profesional dan konsisten.
+
+# 4/6/2026 15
+**Implement Collapsible Sidebar Navigation & Single-Column Article Feed:**
+- **Collapsible Sidebar:** Create a professional, left-aligned sidebar with a user experience similar to YouTube or Medium. It must feature a sleek, black toggle button docked on the left edge that allows users to smoothly expand and collapse the navigation menu. The sidebar should include the following core navigation links:
+  - Home
+  - Bookmarks
+  - Profile
+  - Stories
+- **Centered Article Layout:** Restructure the main feed area to display articles in a clean, single-column layout centered in the middle of the screen. This maximizes focus and readability, providing a modern, minimalist reading experience akin to premium publishing platforms.

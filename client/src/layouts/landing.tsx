@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
+import Sidebar from '@/components/sidebar';
 import { AuthUtils } from '@/lib/auth';
 
 type Props = { children: ReactNode }
@@ -20,8 +21,19 @@ export default function LandingLayout({ children }: Props) {
   return (
     <div className="min-h-screen flex flex-col bg-black">
       <Navbar />
-      {children}
-      {!isLoggedIn && <Footer />}
+      {isLoggedIn ? (
+        <div className="flex">
+          <Sidebar />
+          <main className="flex-1 ml-[72px] min-h-screen transition-all duration-300">
+            {children}
+          </main>
+        </div>
+      ) : (
+        <>
+          {children}
+          <Footer />
+        </>
+      )}
     </div>
   );
 }
