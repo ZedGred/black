@@ -18,11 +18,5 @@ class StoreCommentRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'content.required' => 'Isi komentar wajib diisi.',
-            'content.max'      => 'Komentar maksimal 5000 karakter.',
-        ];
-    }
+
 }

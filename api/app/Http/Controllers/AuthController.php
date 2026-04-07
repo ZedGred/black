@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Hash;
 use App\Helpers\JwtHelper;
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
@@ -27,12 +28,36 @@ class AuthController extends Controller
     }
 
     // =============================
+    // Resend Verification Code
+    // =============================
+    public function resendVerificationCode(Request $request) {
+        $request->validate(['email' => 'required|email']);
+        
+        $user = User::where('email', $request->email)->whereNull('email_verified_at')->first();
+        if (!$user) {
+            return response()->json(['message' => 'No unverified account found with this email.'], 400);
+        }
+        
+        $verificationToken = str_pad((string) mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        $user->update([
+            'verification_token' => $verificationToken,
+            'verification_token_expires_at' => now()->addMinutes(5),
+        ]);
+        
+        \Illuminate\Support\Facades\Mail::raw("Welcome to BLACK.\n\nYour NEW 6-digit verification code is:\n\n$verificationToken\n\nPlease enter this code on the verification page.", function ($message) use ($user) {
+            $message->to($user->email)->subject('Your New Verification Code - BLACK Platform');
+        });
+        
+        return response()->json(['success' => true, 'message' => 'Code resent successfully!']);
+    }
+
+    // =============================
     // Verify & Set Password
     // =============================
     public function verifyEmailPassword(\App\Http\Requests\Auth\VerifyPasswordRequest $request)
     {
         try {
-            $result = $this->authService->verifyPassword($request->token, $request->password);
+            $result = $this->authService->verifyPassword($request->email, $request->token);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -188,7 +213,16 @@ class AuthController extends Controller
                     'email'     => $googleUser->email,
                     'password'  => Hash::make(uniqid()),
                     'google_id' => $googleUser->id,
+                    'email_verified_at' => now(),
                 ]);
+            } else {
+                if (!$user->email_verified_at) {
+                    $user->email_verified_at = now();
+                    if (!$user->google_id) {
+                        $user->google_id = $googleUser->id;
+                    }
+                    $user->save();
+                }
             }
 
             $token  = Auth::guard('api')->login($user);

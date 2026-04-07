@@ -125,4 +125,14 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Fix browser autofill / paste bright background in dark inputs */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #262626 inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
 }

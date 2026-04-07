@@ -21,13 +21,5 @@ class StoreArticleRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'title.required'   => 'Judul artikel wajib diisi.',
-            'title.max'        => 'Judul artikel maksimal 255 karakter.',
-            'content.required' => 'Konten artikel wajib diisi.',
-            'status.in'        => 'Status hanya boleh draft atau published.',
-        ];
-    }
+
 }

@@ -61,44 +61,60 @@ class AuthService
     public function register(array $data): array
     {
         $username = str_replace(' ', '_', $data['name']);
-        $verificationToken = bin2hex(random_bytes(32));
+        // Generate a 6-digit OTP code directly formatted as a string
+        $verificationToken = str_pad((string) mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        $user = User::create([
-            'name'     => $username,
-            'email'    => $data['email'],
-            'password' => null, // Password set during verification
-            'verification_token' => $verificationToken,
-            'verification_token_expires_at' => now()->addHours(24),
-        ]);
-
-        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
-        $verifyUrl = $frontendUrl . '/verify-email?token=' . $verificationToken;
+        $user = User::where('email', $data['email'])->whereNull('email_verified_at')->first();
         
-        \Illuminate\Support\Facades\Mail::raw("Welcome to BLACK.\n\nPlease verify your email and set up your password by clicking this link:\n$verifyUrl", function ($message) use ($user) {
+        $ghostNameUser = User::where('name', $username)->whereNull('email_verified_at')->first();
+        if ($ghostNameUser && (!$user || $ghostNameUser->id !== $user->id)) {
+            $ghostNameUser->delete();
+        }
+
+        if ($user) {
+            $user->update([
+                'name'     => $username,
+                'password' => Hash::make($data['password']),
+                'verification_token' => $verificationToken,
+                'verification_token_expires_at' => now()->addMinutes(5),
+            ]);
+        } else {
+            $user = User::create([
+                'name'     => $username,
+                'email'    => $data['email'],
+                'password' => Hash::make($data['password']),
+                'verification_token' => $verificationToken,
+                'verification_token_expires_at' => now()->addMinutes(5),
+            ]);
+        }
+
+        // Send 6-digit code directly in the email instead of a link
+        \Illuminate\Support\Facades\Mail::raw("Welcome to BLACK.\n\nYour 6-digit verification code is:\n\n$verificationToken\n\nPlease enter this code on the verification page to complete your registration.", function ($message) use ($user) {
             $message->to($user->email)
-                    ->subject('Verify Your Email - BLACK Platform');
+                    ->subject('Your Verification Code - BLACK Platform');
         });
 
         return [
             'success' => true,
-            'message' => 'Registration successful! Verification email sent. Please check your inbox to set your password.',
+            'message' => 'Registration successful! We have sent a 6-digit verification code to your email.',
         ];
     }
 
     /**
-     * Verify token and set initial password.
+     * Verify token based on email and set account as verified.
      */
-    public function verifyPassword(string $token, string $password): array
+    public function verifyPassword(string $email, string $token): array
     {
-        $user = User::where('verification_token', $token)
+        $user = User::where('email', $email)
+                    ->where('verification_token', $token)
                     ->where('verification_token_expires_at', '>', now())
                     ->first();
 
         if (!$user) {
-            throw new \Exception('Invalid or expired verification token.', 400);
+            throw new \Exception('Invalid or expired verification code.', 400);
         }
 
-        $user->password = Hash::make($password);
+
         $user->email_verified_at = now();
         $user->verification_token = null;
         $user->verification_token_expires_at = null;

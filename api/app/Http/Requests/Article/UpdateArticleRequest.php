@@ -19,10 +19,5 @@ class UpdateArticleRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'title.max' => 'Judul artikel maksimal 255 karakter.',
-        ];
-    }
+
 }

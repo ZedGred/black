@@ -5,7 +5,7 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { AuthUtils } from '@/lib/auth';
 import { authService } from '@/services/auth.service';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import AuthLayout from '@/layouts/auth';
 
 type User = {
@@ -21,7 +21,8 @@ export default function Login() {
 
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<null | string>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [emailFocused, setEmailFocused] = useState<boolean>(false);
   const [passwordFocused, setPasswordFocused] = useState<boolean>(false);
@@ -29,7 +30,7 @@ export default function Login() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setFieldErrors({});
 
     try {
       const response = await authService.login(form);
@@ -43,14 +44,27 @@ export default function Login() {
 
       toast.success('Login successful!');
       router.push('/');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      toast.error(errorMessage);
+    } catch (err: any) {
+      if (err.response?.data?.errors) {
+        setFieldErrors(err.response.data.errors);
+        if (err.response.data.message) {
+          toast.error(err.response.data.message);
+        }
+      } else {
+        const errorMessage = err.response?.data?.message || err.message || 'An unexpected error occurred';
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
   }
+
+  const getLabelClass = (isFocused: boolean, hasValue: boolean, hasError: boolean) => {
+    const base = "pointer-events-none absolute left-3 transition-all duration-200";
+    const position = isFocused || hasValue ? "top-1.5 text-xs" : "top-3.5 text-sm";
+    const color = hasError ? "text-destructive" : (isFocused || hasValue ? "text-neutral-400" : "text-neutral-500");
+    return `${base} ${position} ${color}`;
+  };
 
   return (
     <AuthLayout>
@@ -64,8 +78,6 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="w-full max-w-md p-6">
           <h1 className="mb-6 text-center text-3xl font-bold text-white">Sign in to Black</h1>
 
-          {error && <div className="mb-3 rounded bg-red-100 p-2 text-sm text-red-700">{error}</div>}
-
           {/* Email Field with Floating Label */}
           <div className="mb-6">
             <div className="relative">
@@ -73,7 +85,7 @@ export default function Login() {
                 id="email"
                 name="email"
                 type="email"
-                className="peer w-full rounded-lg border border-neutral-600 bg-neutral-800 px-3 pb-2 pt-5 text-sm text-white placeholder-transparent focus:border-white focus:outline-none focus:ring-0"
+                className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${fieldErrors.email ? 'border-destructive focus:border-destructive' : 'border-neutral-600 focus:border-white'}`}
                 placeholder="your@email.com"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, [e.target.name]: e.target.value })}
@@ -83,15 +95,14 @@ export default function Login() {
               />
               <label
                 htmlFor="email"
-                className={`pointer-events-none absolute left-3 text-sm transition-all duration-200 ${
-                  emailFocused || form.email
-                    ? 'top-1.5 text-xs text-neutral-400'
-                    : 'top-3.5 text-neutral-500'
-                }`}
+                className={getLabelClass(emailFocused, !!form.email, !!fieldErrors.email)}
               >
                 Email
               </label>
             </div>
+            {fieldErrors.email && (
+              <p className="mt-1 text-xs text-destructive">{fieldErrors.email[0]}</p>
+            )}
           </div>
 
           {/* Password Field with Floating Label + Show/Hide */}
@@ -101,7 +112,7 @@ export default function Login() {
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                className="peer w-full rounded-lg border border-neutral-600 bg-neutral-800 px-3 pb-2 pt-5 pr-10 text-sm text-white placeholder-transparent focus:border-white focus:outline-none focus:ring-0"
+                className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 pr-10 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${fieldErrors.password ? 'border-destructive focus:border-destructive' : 'border-neutral-600 focus:border-white'}`}
                 placeholder="Password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, [e.target.name]: e.target.value })}
@@ -111,11 +122,7 @@ export default function Login() {
               />
               <label
                 htmlFor="password"
-                className={`pointer-events-none absolute left-3 text-sm transition-all duration-200 ${
-                  passwordFocused || form.password
-                    ? 'top-1.5 text-xs text-neutral-400'
-                    : 'top-3.5 text-neutral-500'
-                }`}
+                className={getLabelClass(passwordFocused, !!form.password, !!fieldErrors.password)}
               >
                 Password
               </label>
@@ -144,6 +151,10 @@ export default function Login() {
                 )}
               </button>
             </div>
+            
+            {fieldErrors.password && (
+              <p className="mt-1 text-xs text-destructive">{fieldErrors.password[0]}</p>
+            )}
 
             <Link
               href="/reset-password"

@@ -18,10 +18,5 @@ class RefreshTokenRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'refresh_token.required' => 'Refresh token wajib diisi.',
-        ];
-    }
+
 }
