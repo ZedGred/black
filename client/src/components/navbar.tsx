@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AuthUtils } from "@/lib/auth";
 import { authService } from "@/services/auth.service";
 import { notificationService } from "@/services/notification.service";
-import { Bell, Menu, X, User, LogOut, Plus } from "lucide-react";
+import { Bell, Menu, X, User, LogOut, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Props = {
@@ -56,16 +56,31 @@ export default function Navbar({ sidebarExpanded = false, onToggleSidebar }: Pro
 
   return (
     <nav className="fixed w-full p-[var(--spacing-gr-md)] bg-black/90 text-white flex justify-between items-center border-b border-gray-800 backdrop-blur-md z-50">
-      <div className="flex items-center gap-3" style={{ padding: '0 var(--spacing-gr-md)' }}>
-        <button 
-          onClick={onToggleSidebar}
-          className="flex flex-col gap-1.5 p-2 hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <span className="w-5 h-0.5 bg-white rounded-full"></span>
-          <span className="w-5 h-0.5 bg-white rounded-full"></span>
-          <span className="w-5 h-0.5 bg-white rounded-full"></span>
-        </button>
-        <Link href="/" className="text-2xl font-bold">Black</Link>
+      {/* Left: Logo */}
+      <div className="flex items-center">
+        {isLoggedIn && (
+          <button 
+            onClick={onToggleSidebar}
+            className="flex flex-col justify-center items-center gap-1.5 w-5 h-5 hover:bg-gray-800 rounded-lg transition-colors mr-4"
+          >
+            <span className="w-5 h-0.5 bg-white rounded-full"></span>
+            <span className="w-5 h-0.5 bg-white rounded-full"></span>
+            <span className="w-5 h-0.5 bg-white rounded-full"></span>
+          </button>
+        )}
+        <Link href="/" className="text-4xl font-black tracking-tighter">Black</Link>
+      </div>
+
+      {/* Search Bar */}
+      <div className="hidden md:flex flex-1 max-w-md mx-8">
+        <div className="relative w-full">
+          <input
+            type="text"
+            placeholder="Search articles..."
+            className="w-full bg-gray-900 border border-gray-800 rounded-full px-4 py-2 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#393E46]"
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+        </div>
       </div>
 
       {/* Desktop Navigation */}

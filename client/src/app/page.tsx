@@ -116,7 +116,7 @@ export default function Home() {
 
   return (
     <LandingLayout>
-      <div className="relative flex flex-col justify-center px-6 md:px-16 lg:px-24 bg-black w-full overflow-hidden" style={{ minHeight: 'calc(100vh - 64px)' }}>
+      <div className="relative flex flex-col justify-center px-6 md:px-16 lg:px-24 bg-black w-full overflow-hidden" style={{ minHeight: 'calc(100vh - 80px)' }}>
         
         {/* Right Side Aesthetic: Cosmic Universe Semi-Circle */}
         <div className="absolute right-0 top-0 bottom-0 pointer-events-none flex items-center justify-end overflow-hidden w-full">

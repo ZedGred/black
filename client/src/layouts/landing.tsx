@@ -25,13 +25,15 @@ export default function LandingLayout({ children }: Props) {
       {isLoggedIn ? (
         <div className="flex">
           <Sidebar isExpanded={sidebarExpanded} onToggle={() => setSidebarExpanded(!sidebarExpanded)} />
-          <main className={`flex-1 ml-[72px] min-h-screen transition-all duration-300 ${sidebarExpanded ? 'lg:ml-64' : ''}`}>
+          <main className={`flex-1 ml-[72px] min-h-screen transition-all duration-300 pt-16 ${sidebarExpanded ? 'lg:ml-64' : ''}`}>
             {children}
           </main>
         </div>
       ) : (
         <>
-          {children}
+          <div className="pt-16">
+            {children}
+          </div>
           <Footer />
         </>
       )}
