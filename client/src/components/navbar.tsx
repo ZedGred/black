@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AuthUtils } from "@/lib/auth";
 import { authService } from "@/services/auth.service";
 import { notificationService } from "@/services/notification.service";
-import { Bell, Menu, X, User, LogOut, Plus, Search } from "lucide-react";
+import { Bell, Menu, X, User, LogOut, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Props = {
@@ -35,7 +35,7 @@ export default function Navbar({ sidebarExpanded = false, onToggleSidebar }: Pro
   const fetchUnreadCount = async () => {
     try {
       const response = await notificationService.getUnreadCount();
-      setUnreadCount(response.data);
+      setUnreadCount(response);
     } catch (error) {
       console.error("Failed to fetch unread count:", error);
     }
@@ -71,17 +71,6 @@ export default function Navbar({ sidebarExpanded = false, onToggleSidebar }: Pro
         <Link href="/" className="text-4xl font-black tracking-tighter">Black</Link>
       </div>
 
-      {/* Search Bar */}
-      <div className="hidden md:flex flex-1 max-w-md mx-8">
-        <div className="relative w-full">
-          <input
-            type="text"
-            placeholder="Search articles..."
-            className="w-full bg-gray-900 border border-gray-800 rounded-full px-4 py-2 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#393E46]"
-          />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-        </div>
-      </div>
 
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center gap-[var(--spacing-gr-md)]">
