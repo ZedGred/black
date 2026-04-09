@@ -58,55 +58,52 @@ export default function Home() {
   if (isLoggedIn) {
     return (
       <LandingLayout>
-        <div className="pt-24 pb-12 px-4 max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white">
-              Welcome back, {user?.name}!
-            </h1>
-            <p className="text-gray-400">Here&apos;s what&apos;s happening today.</p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3 mb-8">
-            <Link href="/articles" className="bg-gray-900 p-6 rounded-lg border border-gray-800 hover:bg-gray-800">
-              <div className="text-3xl font-bold text-white">{articles.length}</div>
-              <div className="text-gray-400">Recent Articles</div>
-            </Link>
-            <Link href="/notifications" className="bg-gray-900 p-6 rounded-lg border border-gray-800 hover:bg-gray-800">
-              <div className="text-3xl font-bold text-white">{unreadCount}</div>
-              <div className="text-gray-400">Unread Notifications</div>
-            </Link>
-            <Link href="/articles/create" className="bg-gray-900 p-6 rounded-lg border border-gray-800 hover:bg-gray-800">
-              <div className="text-3xl font-bold text-white">+</div>
-              <div className="text-gray-400">Write Article</div>
-            </Link>
-          </div>
-
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Latest Articles</h2>
-              <Link href="/articles" className="text-blue-400 hover:underline text-sm">
-                View all
-              </Link>
+        <div className="pt-24 pb-12 px-4 max-w-2xl mx-auto flex flex-col gap-8">
+          <div className="border-b border-gray-800 pb-0">
+            <div className="flex gap-8 text-sm font-medium">
+              <span className="text-white border-b-2 border-white pb-3 cursor-default">For you</span>
+              <span className="text-gray-500 hover:text-gray-300 pb-3 cursor-pointer transition-colors">Following</span>
             </div>
-            
+          </div>
+          
+          <div className="space-y-10">
             {articles.length === 0 ? (
-              <p className="text-gray-400">No articles yet. Be the first to write one!</p>
+              <p className="text-gray-400 py-10 text-center flex flex-col items-center">
+                <span className="text-4xl mb-4">✍️</span>
+                <span>No articles yet. Be the first to write one!</span>
+              </p>
             ) : (
-              <div className="space-y-4">
-                {articles.map((article) => (
-                  <Link
-                    key={article.id}
-                    href={`/articles/${article.slug || article.id}`}
-                    className="block p-4 bg-gray-800 rounded-lg hover:bg-gray-700"
-                  >
-                    <h3 className="text-white font-medium">{article.title}</h3>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
-                      <span>By {article.user?.name}</span>
-                      <span>{article.published_at ? format(new Date(article.published_at), 'MMM d, yyyy') : ''}</span>
-                    </div>
+              articles.map((article) => (
+                <article key={article.id} className="border-b border-gray-800 pb-10 last:border-0 group">
+                  <div className="flex items-center gap-2 mb-3">
+                     <div className="w-6 h-6 rounded-full bg-gray-800 overflow-hidden flex items-center justify-center">
+                       {typeof (article.user as any)?.avatar === 'string' && (article.user as any)?.avatar ? (
+                         <img src={(article.user as any).avatar} alt={article.user?.name} className="w-full h-full object-cover" />
+                       ) : (
+                         <span className="text-[10px] text-white font-bold">{article.user?.name?.charAt(0).toUpperCase() || 'U'}</span>
+                       )}
+                     </div>
+                     <span className="text-sm text-gray-300 font-medium">{article.user?.name}</span>
+                     <span className="text-gray-500 text-xs">•</span>
+                     <span className="text-sm text-gray-500">{article.published_at ? format(new Date(article.published_at), 'MMM d') : 'Recent'}</span>
+                  </div>
+                  <Link href={`/articles/${article.slug || article.id}`} className="block cursor-pointer">
+                    <h2 className="text-xl md:text-2xl font-bold text-white mb-2 group-hover:text-gray-200 transition-colors leading-tight">
+                      {article.title}
+                    </h2>
+                    <p className="text-gray-400 line-clamp-2 text-sm md:text-base leading-relaxed mb-4">
+                      {/* Short placeholder excerpt for a more professional feed look */}
+                      Immerse yourself in this story to explore its full depth. Click to read the full experience...
+                    </p>
                   </Link>
-                ))}
-              </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                      <span className="bg-gray-900 border border-gray-800 px-3 py-1 rounded-full text-gray-300">Story</span>
+                      <span>4 min read</span>
+                    </div>
+                  </div>
+                </article>
+              ))
             )}
           </div>
         </div>

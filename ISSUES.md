@@ -95,3 +95,7 @@ Saat ini, halaman callback untuk Google login (`/auth/google/callback`) masih me
   - Profile
   - Stories
 - **Centered Article Layout:** Restructure the main feed area to display articles in a clean, single-column layout centered in the middle of the screen. This maximizes focus and readability, providing a modern, minimalist reading experience akin to premium publishing platforms.
+
+# 4/9/2026 1
+**Professional Home Feed Layout:**
+I think the home page doesn't look professional like Medium or other social media websites. Delete the "Recent Articles", "Unread Notifications", and "Write Article" grid from the center of the web. Please make the logged-in home page look like a professional feed, centering the articles and removing redundant widgets.
