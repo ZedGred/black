@@ -30,13 +30,29 @@ export default function Login() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    setFieldErrors({});
 
     try {
-      const response = await authService.login(form);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
 
-      if (!response.success) {
-        throw new Error(response.message);
+      const response = await res.json();
+
+      if (!res.ok) {
+        if (response.errors) {
+          setFieldErrors(response.errors);
+          throw new Error("");
+        }
+        setFieldErrors({
+          email: ["Email or password is incorrect"],
+          password: ["Email or password is incorrect"],
+        });
+        throw new Error("");
       }
 
       AuthUtils.setToken(response.data.token.access_token);
@@ -45,14 +61,8 @@ export default function Login() {
       toast.success('Login successful!');
       router.push('/');
     } catch (err: any) {
-      if (err.response?.data?.errors) {
-        setFieldErrors(err.response.data.errors);
-        if (err.response.data.message) {
-          toast.error(err.response.data.message);
-        }
-      } else {
-        const errorMessage = err.response?.data?.message || err.message || 'An unexpected error occurred';
-        toast.error(errorMessage);
+      if (err.message) {
+        toast.error(err.message);
       }
     } finally {
       setLoading(false);

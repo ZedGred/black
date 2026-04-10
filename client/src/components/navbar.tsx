@@ -74,10 +74,6 @@ export default function Navbar({ sidebarExpanded = false, onToggleSidebar }: Pro
 
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center gap-[var(--spacing-gr-md)]">
-        <Link href="/articles" className="text-sm hover:text-gray-300 transition">
-          Articles
-        </Link>
-        
         {isLoggedIn ? (
           <>
             <Link href="/articles/create" className="text-sm hover:text-gray-300 transition flex items-center gap-1">
@@ -146,10 +142,6 @@ export default function Navbar({ sidebarExpanded = false, onToggleSidebar }: Pro
       {isMenuOpen && (
         <div className="absolute top-full left-0 right-0 bg-black border-b border-gray-800 p-[var(--spacing-gr-md)] md:hidden">
           <div className="flex flex-col gap-[var(--spacing-gr-md)]">
-            <Link href="/articles" className="text-sm">
-              Articles
-            </Link>
-            
             {isLoggedIn ? (
               <>
                 <Link href="/articles/create" className="text-sm">

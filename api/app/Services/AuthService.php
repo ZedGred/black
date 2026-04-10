@@ -204,17 +204,17 @@ class AuthService
         \App\Models\PasswordReset::create([
             'user_id' => $user->id,
             'reset_token' => $resetToken,
-            'reset_token_expires_at' => now()->addHours(1),
+            'reset_token_expires_at' => now()->addMinutes(5),
         ]);
 
         // Send reset email
-        $resetLink = env('FRONTEND_URL') . '/forgot-password/reset?token=' . $resetToken;
+        $resetLink = env('FRONTEND_URL') . '/reset-password?token=' . $resetToken;
 
         \Illuminate\Support\Facades\Mail::raw(
             "Hello {$user->name},\n\n"
             . "You requested to reset your password. Click the link below to reset your password:\n\n"
             . "$resetLink\n\n"
-            . "This link will expire in 1 hour.\n\n"
+            . "This link will expire in 5 minutes.\n\n"
             . "If you didn't request this, please ignore this email.\n\n"
             . "Best regards,\n"
             . "BLACK Team",

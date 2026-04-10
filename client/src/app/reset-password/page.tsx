@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { http } from "@/lib/http";
 import { KeyRound, ArrowLeft, Eye, EyeOff, CheckCircle, Loader2, AlertCircle } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
@@ -21,8 +21,9 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     if (!token) {
       toast.error("Invalid or missing reset token");
+      router.replace("/forgot-password");
     }
-  }, [token]);
+  }, [token, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +38,8 @@ export default function ResetPasswordPage() {
     try {
       setLoading(true);
       await http.post("/reset-password", { token, password, password_confirmation: confirm });
-      setSuccess(true);
-      setTimeout(() => router.push("/login"), 3000);
+      toast.success("Password reset successfully! Redirecting to login...");
+      router.push("/login");
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to reset password. The link may have expired.");
     } finally {
