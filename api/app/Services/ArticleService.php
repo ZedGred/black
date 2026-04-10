@@ -26,7 +26,7 @@ class ArticleService
     /**
      * Get a single article with full detail (comments, likes, user info).
      */
-    public function getArticleDetail(string $id, ?string $authUserId = null): Article
+    public function getArticleDetail(string $idOrSlug, ?string $authUserId = null): Article
     {
         $article = Article::with(['user', 'category'])
             ->withCount('likedUsers')
@@ -44,9 +44,10 @@ class ArticleService
                         }
                     }]);
             }])
-            ->findOrFail($id);
+            ->where('id', $idOrSlug)
+            ->orWhere('slug', $idOrSlug)
+            ->firstOrFail();
 
-        // Map liked_by_user boolean
         $article->liked_by_user = ($article->liked_by_user_count ?? 0) > 0;
         unset($article->liked_by_user_count);
 
@@ -66,6 +67,12 @@ class ArticleService
     {
         $data['user_id'] = $userId;
         $sendNotification = false;
+
+        // Remap thumbnail -> image
+        if (isset($data['thumbnail'])) {
+            $data['image'] = $data['thumbnail'];
+            unset($data['thumbnail']);
+        }
 
         if (isset($data['status']) && $data['status'] === 'published') {
             $data['published_at'] = now();
@@ -177,5 +184,20 @@ class ArticleService
         );
 
         return $article;
+    }
+
+    public function search(string $query, int $perPage = 10): LengthAwarePaginator
+    {
+        return Article::with(['user', 'category'])
+            ->withCount('likedUsers')
+            ->withCount('comments')
+            ->where('status', 'published')
+            ->where(function ($q) use ($query) {
+                $q->where('title', 'like', "%{$query}%")
+                  ->orWhere('excerpt', 'like', "%{$query}%")
+                  ->orWhere('content', 'like', "%{$query}%");
+            })
+            ->orderBy('published_at', 'desc')
+            ->paginate($perPage);
     }
 }

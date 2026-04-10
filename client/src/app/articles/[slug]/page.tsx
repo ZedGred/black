@@ -171,8 +171,82 @@ export default function ArticleDetailPage() {
           </div>
         </div>
 
-        <article className="prose prose-invert max-w-none">
-          <div dangerouslySetInnerHTML={{ __html: article.content }} />
+        <article className="max-w-none">
+          <div dangerouslySetInnerHTML={{ __html: article.content }} className="article-content" />
+          <style dangerouslySetInnerHTML={{ __html: `
+            .article-content {
+              line-height: 1.8;
+              font-size: 1.125rem;
+              color: #d1d5db;
+            }
+            .article-content p {
+              margin-bottom: 1.5em;
+            }
+            .article-content h2 {
+              font-size: 1.5rem;
+              font-weight: bold;
+              color: white;
+              margin-top: 2em;
+              margin-bottom: 1em;
+            }
+            .article-content h3 {
+              font-size: 1.25rem;
+              font-weight: bold;
+              color: white;
+              margin-top: 1.5em;
+              margin-bottom: 0.75em;
+            }
+            .article-content img {
+              max-width: 100%;
+              border-radius: 0.5rem;
+              margin: 2em auto;
+            }
+            .article-content iframe {
+              max-width: 100%;
+              border-radius: 0.5rem;
+              margin: 2em auto;
+              aspect-ratio: 16/9;
+            }
+            .article-content a {
+              color: #3b82f6;
+              text-decoration: underline;
+            }
+            .article-content blockquote {
+              border-left: 4px solid #4b5563;
+              padding-left: 1.25rem;
+              color: #9ca3af;
+              font-style: italic;
+              margin: 1.5em 0;
+            }
+            .article-content pre {
+              background-color: #111827;
+              padding: 1.5rem;
+              border-radius: 0.5rem;
+              overflow-x: auto;
+              margin: 1.5em 0;
+            }
+            .article-content code {
+              background-color: #1f2937;
+              padding: 0.2rem 0.4rem;
+              border-radius: 0.25rem;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+              font-size: 0.9em;
+            }
+            .article-content pre code {
+              background-color: transparent;
+              padding: 0;
+            }
+            .article-content ul {
+              list-style-type: disc;
+              padding-left: 1.5rem;
+              margin-bottom: 1.5rem;
+            }
+            .article-content ol {
+              list-style-type: decimal;
+              padding-left: 1.5rem;
+              margin-bottom: 1.5rem;
+            }
+          `}} />
         </article>
 
         {/* Comments Section */}

@@ -25,6 +25,26 @@ class ArticleController extends Controller
         ]);
     }
 
+    // GET /api/articles/search?q=...
+    public function search(\Illuminate\Http\Request $request)
+    {
+        $query = $request->get('q', '');
+        if (strlen($query) < 2) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Search query must be at least 2 characters',
+            ], 422);
+        }
+
+        $articles = $this->articleService->search($query);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Search results',
+            'data'    => ArticleResource::collection($articles)->response()->getData(true),
+        ]);
+    }
+
     // GET /api/articles/{article}
     public function show(string $id)
     {

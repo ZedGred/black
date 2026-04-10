@@ -1,5 +1,5 @@
 import { http } from "@/lib/http";
-import { Article, Category, Comment, ApiResponse, PaginatedResponse } from "@/types/article";
+import { Article, Category, Comment, ApiResponse } from "@/types/article";
 
 export const articleService = {
   async getArticles(params?: {
@@ -11,7 +11,15 @@ export const articleService = {
     const response = await http.get("/articles", { params });
     return {
       data: response.data.data.data,
-      meta: response.data.data.meta
+      meta: response.data.data.meta,
+    };
+  },
+
+  async searchArticles(query: string, params?: { page?: number }): Promise<{ data: any[]; meta: any }> {
+    const response = await http.get("/articles/search", { params: { q: query, ...params } });
+    return {
+      data: response.data.data.data ?? [],
+      meta: response.data.data.meta ?? {},
     };
   },
 
@@ -28,12 +36,30 @@ export const articleService = {
     return response.data;
   },
 
+  async getMyArticles(params?: { page?: number; per_page?: number }): Promise<{ data: any[]; meta: any }> {
+    const response = await http.get("/articles/my/articles", { params });
+    const raw = response.data;
+    return {
+      data: raw.data?.data ?? raw.data ?? [],
+      meta: raw.data?.meta ?? {},
+    };
+  },
+
+  async getMyDrafts(params?: { page?: number; per_page?: number }): Promise<{ data: any[]; meta: any }> {
+    const response = await http.get("/articles/my/drafts", { params });
+    const raw = response.data;
+    return {
+      data: raw.data?.data ?? raw.data ?? [],
+      meta: raw.data?.meta ?? {},
+    };
+  },
+
   async createArticle(data: {
     title: string;
     content: string;
     excerpt?: string;
     thumbnail?: string;
-    category_ids?: string[];
+    category_id?: string;
     status?: "draft" | "published";
   }): Promise<ApiResponse<Article>> {
     const response = await http.post("/articles", data);
@@ -47,7 +73,7 @@ export const articleService = {
       content: string;
       excerpt: string;
       thumbnail: string;
-      category_ids: string[];
+      category_id: string;
       status: string;
     }>
   ): Promise<ApiResponse<Article>> {
@@ -57,6 +83,11 @@ export const articleService = {
 
   async deleteArticle(id: string): Promise<ApiResponse<null>> {
     const response = await http.delete(`/articles/${id}`);
+    return response.data;
+  },
+
+  async publishDraft(id: string): Promise<ApiResponse<Article>> {
+    const response = await http.post(`/articles/${id}/publish`);
     return response.data;
   },
 
@@ -70,34 +101,29 @@ export const articleService = {
     return response.data;
   },
 
-  async getMyDrafts(params?: {
-    page?: number;
-    per_page?: number;
-  }): Promise<ApiResponse<Article[]>> {
-    const response = await http.get("/articles/my/drafts", { params });
+  async bookmarkArticle(id: string): Promise<ApiResponse<null>> {
+    const response = await http.post(`/articles/${id}/bookmark`);
     return response.data;
   },
 
-  async getMyArticles(params?: {
-    page?: number;
-    per_page?: number;
-  }): Promise<ApiResponse<Article[]>> {
-    const response = await http.get("/articles/my/articles", { params });
+  async unbookmarkArticle(id: string): Promise<ApiResponse<null>> {
+    const response = await http.delete(`/articles/${id}/bookmark`);
     return response.data;
   },
 
-  async publishDraft(id: string): Promise<ApiResponse<Article>> {
-    const response = await http.post(`/articles/${id}/publish`);
-    return response.data;
+  async getBookmarks(): Promise<{ data: any[]; meta: any }> {
+    const response = await http.get("/bookmarks");
+    return {
+      data: response.data.data.data ?? [],
+      meta: response.data.data.meta ?? {},
+    };
   },
 
   async getArticleComments(
     articleId: string,
     params?: { page?: number; per_page?: number }
   ): Promise<ApiResponse<Comment[]>> {
-    const response = await http.get(`/articles/${articleId}/comments`, {
-      params,
-    });
+    const response = await http.get(`/articles/${articleId}/comments`, { params });
     return response.data;
   },
 
@@ -121,10 +147,7 @@ export const categoryService = {
     return response.data;
   },
 
-  async createCategory(data: {
-    name: string;
-    slug?: string;
-  }): Promise<ApiResponse<Category>> {
+  async createCategory(data: { name: string; slug?: string }): Promise<ApiResponse<Category>> {
     const response = await http.post("/categories", data);
     return response.data;
   },
@@ -140,5 +163,22 @@ export const categoryService = {
   async deleteCategory(id: string): Promise<ApiResponse<null>> {
     const response = await http.delete(`/categories/${id}`);
     return response.data;
+  },
+};
+
+export const profileService = {
+  async getMe(): Promise<any> {
+    const response = await http.get("/me");
+    return response.data.data;
+  },
+
+  async updateProfile(data: { name?: string; bio?: string; avatar?: string }): Promise<any> {
+    const response = await http.put("/profile", data);
+    return response.data;
+  },
+
+  async getPublicProfile(username: string): Promise<any> {
+    const response = await http.get(`/users/${username}/profile`);
+    return response.data.data;
   },
 };

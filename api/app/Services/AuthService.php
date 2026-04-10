@@ -179,4 +179,83 @@ class AuthService
 
         return $this->buildTokenResponse($user, $newAccessToken, $newRefreshToken);
     }
+
+    /**
+     * Send password reset email to user
+     *
+     * @throws \Exception if email not found
+     */
+    public function sendPasswordResetEmail(string $email): array
+    {
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            throw new \Exception('Email address not found', 404);
+        }
+
+        // Invalidate any previous reset tokens
+        \App\Models\PasswordReset::where('user_id', $user->id)
+            ->where('is_used', false)
+            ->update(['is_used' => true, 'used_at' => now()]);
+
+        // Generate new reset token
+        $resetToken = bin2hex(random_bytes(32));
+
+        \App\Models\PasswordReset::create([
+            'user_id' => $user->id,
+            'reset_token' => $resetToken,
+            'reset_token_expires_at' => now()->addHours(1),
+        ]);
+
+        // Send reset email
+        $resetLink = env('FRONTEND_URL') . '/forgot-password/reset?token=' . $resetToken;
+
+        \Illuminate\Support\Facades\Mail::raw(
+            "Hello {$user->name},\n\n"
+            . "You requested to reset your password. Click the link below to reset your password:\n\n"
+            . "$resetLink\n\n"
+            . "This link will expire in 1 hour.\n\n"
+            . "If you didn't request this, please ignore this email.\n\n"
+            . "Best regards,\n"
+            . "BLACK Team",
+            function ($message) use ($user) {
+                $message->to($user->email)->subject('Reset Your Password - BLACK Platform');
+            }
+        );
+
+        return [
+            'success' => true,
+            'message' => 'Password reset link has been sent to your email. Please check your inbox and follow the link to reset your password.',
+        ];
+    }
+
+    /**
+     * Reset password using reset token
+     *
+     * @throws \Exception if token invalid/expired
+     */
+    public function resetPassword(string $resetToken, string $password): array
+    {
+        $passwordReset = \App\Models\PasswordReset::where('reset_token', $resetToken)
+            ->where('is_used', false)
+            ->where('reset_token_expires_at', '>', now())
+            ->first();
+
+        if (!$passwordReset) {
+            throw new \Exception('Invalid or expired reset token', 400);
+        }
+
+        $user = $passwordReset->user;
+
+        // Update password
+        $user->update(['password' => Hash::make($password)]);
+
+        // Mark token as used
+        $passwordReset->update(['is_used' => true, 'used_at' => now()]);
+
+        return [
+            'success' => true,
+            'message' => 'Password has been reset successfully. You can now login with your new password.',
+        ];
+    }
 }

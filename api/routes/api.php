@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ArticleLikeController;
+use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
 use App\Http\Controllers\CategoryController;
@@ -32,6 +33,9 @@ Route::middleware('throttle:auth')->group(function () {
     Route::post('register/verify', [AuthController::class, 'verifyEmailPassword']);
     Route::post('register/resend', [AuthController::class, 'resendVerificationCode']);
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('verify-reset-token', [AuthController::class, 'verifyResetToken']);
     Route::post('refresh/token', [AuthController::class, 'refreshToken']);
     Route::post('refresh', [AuthController::class, 'refresh']);
 });
@@ -47,8 +51,12 @@ Route::middleware('web')->group(function () {
 // =============================
 // Articles
 Route::get('/articles', [ArticleController::class, 'index']);
+Route::get('/articles/search', [ArticleController::class, 'search']);
 Route::get('/articles/{article}', [ArticleController::class, 'show']);
 Route::get('/articles/{article}/comments', [CommentController::class, 'index']);
+
+// User public profile
+Route::get('/users/{username}/profile', [AuthController::class, 'publicProfile']);
 
 // Categories
 Route::get('/categories', [CategoryController::class, 'index']);
@@ -105,11 +113,21 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/{article}/like', [ArticleLikeController::class, 'like'])->middleware('permission:articles.like');
         Route::delete('/{article}/like', [ArticleLikeController::class, 'unlike'])->middleware('permission:articles.like');
 
+        // Bookmark/Unbookmark
+        Route::post('/{article}/bookmark', [BookmarkController::class, 'bookmark']);
+        Route::delete('/{article}/bookmark', [BookmarkController::class, 'unbookmark']);
+
         // Draft routes
         Route::get('/my/drafts', [ArticleController::class, 'myDrafts']);
         Route::get('/my/articles', [ArticleController::class, 'myArticles']);
         Route::post('/{article}/publish', [ArticleController::class, 'publishDraft']);
     });
+
+    // Bookmarks list
+    Route::get('/bookmarks', [BookmarkController::class, 'index']);
+
+    // Profile update (own profile)
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
 
     Route::middleware('permission:users.view')->group(function () {
         Route::get('admin/users', [AuthController::class, 'listUsers']);

@@ -15,7 +15,22 @@ class Article extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['title', 'content', 'user_id', 'category_id', 'status', 'published_at'];
+    protected $fillable = ['title', 'content', 'excerpt', 'image', 'user_id', 'category_id', 'status', 'published_at', 'slug'];
+
+    protected static function booted()
+    {
+        static::creating(function ($article) {
+            if (empty($article->slug)) {
+                $base = \Illuminate\Support\Str::slug($article->title);
+                $slug = $base;
+                $i = 1;
+                while (static::where('slug', $slug)->exists()) {
+                    $slug = $base . '-' . $i++;
+                }
+                $article->slug = $slug;
+            }
+        });
+    }
 
     public function user()
     {
@@ -51,6 +66,17 @@ class Article extends Model
     public function unlike(User $user)
     {
         $this->likedUsers()->detach($user->id);
+    }
+
+    public function bookmarkedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'bookmarks', 'article_id', 'user_id')
+            ->withTimestamps();
+    }
+
+    public function isBookmarkedBy(User $user): bool
+    {
+        return $this->bookmarkedByUsers()->where('user_id', $user->id)->exists();
     }
 
     public function likesCount(): int

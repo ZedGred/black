@@ -18,12 +18,15 @@ class User extends Authenticatable implements JWTSubject
     protected $keyType = 'string';
 
     protected $fillable = [
-        'name', 
-        'email', 
-        'password', 
-        'verification_token', 
-        'verification_token_expires_at', 
-        'email_verified_at', 
+        'name',
+        'username',
+        'email',
+        'password',
+        'avatar',
+        'bio',
+        'verification_token',
+        'verification_token_expires_at',
+        'email_verified_at',
         'google_id'
     ];
     protected $hidden = [
@@ -39,6 +42,12 @@ class User extends Authenticatable implements JWTSubject
     public function comments()
     {
         return $this->hasMany(Comment::class);
+    }
+
+    public function bookmarkedArticles()
+    {
+        return $this->belongsToMany(Article::class, 'bookmarks', 'user_id', 'article_id')
+            ->withTimestamps();
     }
 
     public function likedArticles()

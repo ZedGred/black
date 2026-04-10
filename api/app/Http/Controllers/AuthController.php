@@ -102,34 +102,6 @@ class AuthController extends Controller
         ]);
     }
 
-    // =============================
-    // Me (get authenticated user)
-    // =============================
-    public function me()
-    {
-        $user = Auth::guard('api')->user();
-
-        if (! $user) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Unauthorized',
-            ], 401);
-        }
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'User data retrieved successfully',
-            'data'    => [
-                'user'        => [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
-                    'email' => $user->email,
-                ],
-                'permissions' => $user->getAllPermissions()->pluck('name'),
-                'roles'       => $user->getRoleNames(),
-            ],
-        ]);
-    }
 
     // =============================
     // Refresh Token (via DB table)
@@ -249,6 +221,158 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'data'   => $users,
+        ]);
+    }
+
+    // =============================
+    // Me (get authenticated user) - extended
+    // =============================
+    public function me()
+    {
+        $user = Auth::guard('api')->user();
+
+        if (! $user) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'User data retrieved successfully',
+            'data'    => [
+                'user' => [
+                    'id'       => $user->id,
+                    'name'     => $user->name,
+                    'username' => $user->username ?? $user->name,
+                    'email'    => $user->email,
+                    'avatar'   => $user->avatar,
+                    'bio'      => $user->bio,
+                ],
+                'permissions' => $user->getAllPermissions()->pluck('name'),
+                'roles'       => $user->getRoleNames(),
+            ],
+        ]);
+    }
+
+    // =============================
+    // Public Profile (by username)
+    // =============================
+    public function publicProfile(string $username)
+    {
+        $user = User::where('username', $username)
+            ->orWhere('name', $username)
+            ->firstOrFail();
+
+        $articles = $user->articles()
+            ->where('status', 'published')
+            ->withCount('likedUsers')
+            ->withCount('comments')
+            ->latest('published_at')
+            ->paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => [
+                    'id'              => $user->id,
+                    'name'            => $user->name,
+                    'username'        => $user->username ?? $user->name,
+                    'avatar'          => $user->avatar,
+                    'bio'             => $user->bio,
+                    'followers_count' => $user->followers()->count(),
+                    'following_count' => $user->following()->count(),
+                    'articles_count'  => $user->articles()->count(),
+                ],
+                'articles' => \App\Http\Resources\ArticleResource::collection($articles)->response()->getData(true),
+            ],
+        ]);
+    }
+
+    // =============================
+    // Update own profile
+    // =============================
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        $validated = $request->validate([
+            'name'   => 'sometimes|string|max:255',
+            'bio'    => 'sometimes|nullable|string|max:500',
+            'avatar' => 'sometimes|nullable|string',
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => [
+                'id'       => $user->id,
+                'name'     => $user->name,
+                'username' => $user->username ?? $user->name,
+                'email'    => $user->email,
+                'avatar'   => $user->avatar,
+                'bio'      => $user->bio,
+            ],
+        ]);
+    }
+
+    // =============================
+    // Forgot Password
+    // =============================
+    public function forgotPassword(\App\Http\Requests\Auth\ForgotPasswordRequest $request)
+    {
+        try {
+            $result = $this->authService->sendPasswordResetEmail($request->email);
+            return response()->json($result, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 404);
+        }
+    }
+
+    // =============================
+    // Reset Password
+    // =============================
+    public function resetPassword(\App\Http\Requests\Auth\ResetPasswordRequest $request)
+    {
+        try {
+            $result = $this->authService->resetPassword($request->reset_token, $request->password);
+            return response()->json($result, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    // =============================
+    // Verify Reset Token
+    // =============================
+    public function verifyResetToken(Request $request)
+    {
+        $request->validate(['reset_token' => 'required|string']);
+
+        $passwordReset = \App\Models\PasswordReset::where('reset_token', $request->reset_token)
+            ->where('is_used', false)
+            ->where('reset_token_expires_at', '>', now())
+            ->first();
+
+        if (!$passwordReset) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired reset token',
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reset token is valid',
         ]);
     }
 }

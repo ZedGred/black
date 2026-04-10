@@ -99,3 +99,22 @@ Saat ini, halaman callback untuk Google login (`/auth/google/callback`) masih me
 # 4/9/2026 1
 **Professional Home Feed Layout:**
 I think the home page doesn't look professional like Medium or other social media websites. Delete the "Recent Articles", "Unread Notifications", and "Write Article" grid from the center of the web. Please make the logged-in home page look like a professional feed, centering the articles and removing redundant widgets.
+
+# 4/9/2026 2
+**Advanced Rich Text/Block Editor for Articles:**
+The current article writing interface is too basic (just title and text). It needs to be upgraded to function like Medium or other professional publishing platforms. The editor must be enhanced to support:
+- Uploading and inserting photos.
+- Uploading and embedding videos.
+- Embedding external content.
+- Code block formatting.
+- Creating "new parts" or sections (similar to a modular block editor) to provide a richer, more structured writing experience.
+
+# 4/9/2026 3
+**Major Platform Feature Overhaul (Epics):**
+- **Publishing Fix:** Address the issue preventing articles from actually being published.
+- **Article Routing via ID/Slug:** Delete the generic `/articles` list view. URLs must be specific (e.g., `/articles/[id_or_slug]`) so users can read specific content correctly.
+- **Search & Discoverability:** Implement an article search feature. Show connected or related articles.
+- **User Profiles:** Enable users to view their own profile, change their avatar image and display name, and click to open other people's profiles.
+- **Social Features:** Add fully working Like/Unlike buttons for articles and Follow/Unfollow buttons on other users' profiles.
+- **Bookmarks:** Connect Bookmark/Unbookmark functions on articles and show a dedicated "Bookmarks" feed.
+- **Stories Feature:** Establish a specific "Stories" feed or tab that exclusively displays the articles authored by the user.
