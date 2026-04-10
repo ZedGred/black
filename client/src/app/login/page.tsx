@@ -1,58 +1,45 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { z } from 'zod';
+import { useForm } from '@/hooks/useForm';
 import { AuthUtils } from '@/lib/auth';
-import { authService } from '@/services/auth.service';
 import { toast } from 'sonner';
 import AuthLayout from '@/layouts/auth';
 
-type User = {
-  email: string;
-  password: string;
-};
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const [form, setForm] = useState<User>({
-    email: '',
-    password: '',
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  
+  const { register, handleSubmit, formState: { errors }, setError } = useForm(loginSchema, {
+    defaultValues: { email: '', password: '' },
   });
 
-  const router = useRouter();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-  
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [emailFocused, setEmailFocused] = useState<boolean>(false);
-  const [passwordFocused, setPasswordFocused] = useState<boolean>(false);
-
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-
+  const onSubmit = async (data: LoginForm) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/login`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(data),
       });
 
       const response = await res.json();
 
       if (!res.ok) {
-        if (response.errors) {
-          setFieldErrors(response.errors);
-          throw new Error("");
-        }
-        setFieldErrors({
-          email: ["Email or password is incorrect"],
-          password: ["Email or password is incorrect"],
-        });
-        throw new Error("");
+        setError('root', { message: 'Email or password is incorrect' });
+        return;
       }
 
       AuthUtils.setToken(response.data.token.access_token);
@@ -60,126 +47,91 @@ export default function Login() {
 
       toast.success('Login successful!');
       router.push('/');
-    } catch (err: any) {
-      if (err.message) {
-        toast.error(err.message);
-      }
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      toast.error('An unexpected error occurred');
     }
-  }
+  };
 
-  const getLabelClass = (isFocused: boolean, hasValue: boolean, hasError: boolean) => {
-    const base = "pointer-events-none absolute left-3 transition-all duration-200";
-    const position = isFocused || hasValue ? "top-1.5 text-xs" : "top-3.5 text-sm";
-    const color = hasError ? "text-destructive" : (isFocused || hasValue ? "text-neutral-400" : "text-neutral-500");
+  const getLabelClass = (hasError: boolean, hasValue: boolean, isFocused: boolean) => {
+    const base = 'pointer-events-none absolute left-3 transition-all duration-200';
+    const position = isFocused || hasValue ? 'top-1.5 text-xs' : 'top-3.5 text-sm';
+    const color = hasError ? 'text-red-500' : isFocused || hasValue ? 'text-neutral-400' : 'text-neutral-500';
     return `${base} ${position} ${color}`;
   };
 
   return (
     <AuthLayout>
-      {/* Left Side - Banner / Info */}
       <div className="flex w-2/5 items-center justify-center bg-black text-white">
         <h2 className="text-9xl font-bold">BLACK</h2>
       </div>
 
-      {/* Right Side - Login Form */}
       <div className="flex w-3/5 items-center justify-center bg-neutral-950 shadow-lg">
-        <form onSubmit={handleSubmit} className="w-full max-w-md p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-md p-6">
           <h1 className="mb-6 text-center text-3xl font-bold text-white">Sign in to Black</h1>
 
-          {/* Email Field with Floating Label */}
+          {errors.root && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500 rounded-lg">
+              <p className="text-sm text-red-500">{errors.root.message}</p>
+            </div>
+          )}
+
           <div className="mb-6">
             <div className="relative">
               <input
-                id="email"
-                name="email"
+                {...register('email')}
                 type="email"
-                className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${fieldErrors.email ? 'border-destructive focus:border-destructive' : 'border-neutral-600 focus:border-white'}`}
+                className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-neutral-600 focus:border-white'}`}
                 placeholder="your@email.com"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, [e.target.name]: e.target.value })}
-                onFocus={() => setEmailFocused(true)}
-                onBlur={() => setEmailFocused(false)}
-                required
               />
-              <label
-                htmlFor="email"
-                className={getLabelClass(emailFocused, !!form.email, !!fieldErrors.email)}
-              >
+              <label className={getLabelClass(!!errors.email, false, false)}>
                 Email
               </label>
             </div>
-            {fieldErrors.email && (
-              <p className="mt-1 text-xs text-destructive">{fieldErrors.email[0]}</p>
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
             )}
           </div>
 
-          {/* Password Field with Floating Label + Show/Hide */}
           <div className="mb-6">
             <div className="relative">
               <input
-                id="password"
-                name="password"
+                {...register('password')}
                 type={showPassword ? 'text' : 'password'}
-                className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 pr-10 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${fieldErrors.password ? 'border-destructive focus:border-destructive' : 'border-neutral-600 focus:border-white'}`}
+                className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 pr-10 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-neutral-600 focus:border-white'}`}
                 placeholder="Password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, [e.target.name]: e.target.value })}
-                onFocus={() => setPasswordFocused(true)}
-                onBlur={() => setPasswordFocused(false)}
-                required
               />
-              <label
-                htmlFor="password"
-                className={getLabelClass(passwordFocused, !!form.password, !!fieldErrors.password)}
-              >
+              <label className={getLabelClass(!!errors.password, false, false)}>
                 Password
               </label>
 
-              {/* Show / Hide toggle */}
               <button
                 type="button"
                 tabIndex={-1}
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white focus:outline-none"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
               >
                 {showPassword ? (
-                  /* Eye-off icon */
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                    <line x1="1" y1="1" x2="23" y2="23" />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><line x1="1" y1="1" x2="23" y2="23" />
                   </svg>
                 ) : (
-                  /* Eye icon */
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
                   </svg>
                 )}
               </button>
             </div>
-            
-            {fieldErrors.password && (
-              <p className="mt-1 text-xs text-destructive">{fieldErrors.password[0]}</p>
+            {errors.password && (
+              <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
             )}
 
-            <Link
-              href="/reset-password"
-              className="mt-2 inline-block text-xs font-medium text-blue-300 hover:underline"
-            >
+            <Link href="/forgot-password" className="mt-2 inline-block text-xs font-medium text-blue-300 hover:underline">
               Forgot Your Password?
             </Link>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mb-2 w-full rounded-3xl bg-white px-4 py-2 font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? 'Logging in...' : 'Log In'}
+          <button type="submit" className="mb-2 w-full rounded-3xl bg-white px-4 py-2 font-semibold text-black hover:bg-neutral-200">
+            Log In
           </button>
 
           <div className="my-4 flex items-center gap-2">
@@ -188,10 +140,7 @@ export default function Login() {
             <div className="h-px flex-1 bg-gray-600"></div>
           </div>
 
-          <a
-            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/auth/google`}
-            className="mb-6 flex w-full items-center justify-center gap-2 rounded-3xl border border-gray-500 bg-transparent px-4 py-2 font-semibold text-white transition hover:bg-gray-800"
-          >
+          <a href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/auth/google`} className="mb-6 flex w-full items-center justify-center gap-2 rounded-3xl border border-gray-500 bg-transparent px-4 py-2 font-semibold text-white hover:bg-gray-800">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -203,9 +152,7 @@ export default function Login() {
 
           <div className="text-center text-xs font-medium text-white">
             Need an account?
-            <Link href="/register" className="ml-1 text-blue-300 hover:underline">
-              Register
-            </Link>
+            <Link href="/register" className="ml-1 text-blue-300 hover:underline">Register</Link>
           </div>
         </form>
       </div>
