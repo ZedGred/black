@@ -34,6 +34,7 @@ class ArticleSeeder extends Seeder
                 'meta_title' => $faker->sentence(6, true),
                 'meta_description' => $faker->sentence(12, true),
                 'tags' => json_encode($faker->words(3)),
+                'status' => 'published',
                 'published_at' => $faker->dateTimeBetween('-6 months', 'now'),
             ]);
         }
