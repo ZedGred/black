@@ -19,10 +19,13 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function Login() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   
-  const { register, handleSubmit, formState: { errors }, setError } = useForm(loginSchema, {
+  const { register, handleSubmit, formState: { errors }, setError, watch } = useForm(loginSchema, {
     defaultValues: { email: '', password: '' },
   });
+
+  const watchedValues = watch();
 
   const onSubmit = async (data: LoginForm) => {
     try {
@@ -38,7 +41,8 @@ export default function Login() {
       const response = await res.json();
 
       if (!res.ok) {
-        setError('root', { message: 'Email or password is incorrect' });
+        setError('email', { message: 'Email or password is incorrect' });
+        setError('password', { message: ' ' });
         return;
       }
 
@@ -52,7 +56,9 @@ export default function Login() {
     }
   };
 
-  const getLabelClass = (hasError: boolean, hasValue: boolean, isFocused: boolean) => {
+  const getLabelClass = (fieldName: string, hasError: boolean) => {
+    const isFocused = focusedField === fieldName;
+    const hasValue = !!watchedValues[fieldName as keyof typeof watchedValues];
     const base = 'pointer-events-none absolute left-3 transition-all duration-200';
     const position = isFocused || hasValue ? 'top-1.5 text-xs' : 'top-3.5 text-sm';
     const color = hasError ? 'text-red-500' : isFocused || hasValue ? 'text-neutral-400' : 'text-neutral-500';
@@ -69,11 +75,7 @@ export default function Login() {
         <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-md p-6">
           <h1 className="mb-6 text-center text-3xl font-bold text-white">Sign in to Black</h1>
 
-          {errors.root && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500 rounded-lg">
-              <p className="text-sm text-red-500">{errors.root.message}</p>
-            </div>
-          )}
+          
 
           <div className="mb-6">
             <div className="relative">
@@ -82,8 +84,10 @@ export default function Login() {
                 type="email"
                 className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-neutral-600 focus:border-white'}`}
                 placeholder="your@email.com"
+                onFocus={() => setFocusedField('email')}
+                onBlur={() => setFocusedField(null)}
               />
-              <label className={getLabelClass(!!errors.email, false, false)}>
+              <label className={getLabelClass('email', !!errors.email)}>
                 Email
               </label>
             </div>
@@ -99,8 +103,10 @@ export default function Login() {
                 type={showPassword ? 'text' : 'password'}
                 className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 pr-10 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${errors.password ? 'border-red-500 focus:border-red-500' : 'border-neutral-600 focus:border-white'}`}
                 placeholder="Password"
+                onFocus={() => setFocusedField('password')}
+                onBlur={() => setFocusedField(null)}
               />
-              <label className={getLabelClass(!!errors.password, false, false)}>
+              <label className={getLabelClass('password', !!errors.password)}>
                 Password
               </label>
 

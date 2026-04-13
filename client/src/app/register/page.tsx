@@ -19,10 +19,13 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function Register() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors }, setError } = useForm(registerSchema, {
+  const { register, handleSubmit, formState: { errors }, setError, watch } = useForm(registerSchema, {
     defaultValues: { name: "", email: "", password: "" },
   });
+
+  const watchedValues = watch();
 
   const onSubmit = async (data: RegisterForm) => {
     try {
@@ -55,7 +58,9 @@ export default function Register() {
     }
   };
 
-  const getLabelClass = (hasError: boolean, hasValue: boolean, isFocused: boolean) => {
+  const getLabelClass = (fieldName: string, hasError: boolean) => {
+    const isFocused = focusedField === fieldName;
+    const hasValue = !!watchedValues[fieldName as keyof typeof watchedValues];
     const base = "pointer-events-none absolute left-3 transition-all duration-200";
     const position = isFocused || hasValue ? "top-1.5 text-xs" : "top-3.5 text-sm";
     const color = hasError ? "text-red-500" : isFocused || hasValue ? "text-neutral-400" : "text-neutral-500";
@@ -79,8 +84,10 @@ export default function Register() {
                 type="text"
                 className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${errors.name ? "border-red-500 focus:border-red-500" : "border-neutral-600 focus:border-white"}`}
                 placeholder="Your name"
+                onFocus={() => setFocusedField("name")}
+                onBlur={() => setFocusedField(null)}
               />
-              <label className={getLabelClass(!!errors.name, false, false)}>Name</label>
+              <label className={getLabelClass("name", !!errors.name)}>Name</label>
             </div>
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
@@ -92,8 +99,10 @@ export default function Register() {
                 type="email"
                 className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${errors.email ? "border-red-500 focus:border-red-500" : "border-neutral-600 focus:border-white"}`}
                 placeholder="your@email.com"
+                onFocus={() => setFocusedField("email")}
+                onBlur={() => setFocusedField(null)}
               />
-              <label className={getLabelClass(!!errors.email, false, false)}>Email</label>
+              <label className={getLabelClass("email", !!errors.email)}>Email</label>
             </div>
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
           </div>
@@ -105,8 +114,10 @@ export default function Register() {
                 type={showPassword ? "text" : "password"}
                 className={`peer w-full rounded-lg border bg-neutral-800 px-3 pb-2 pt-5 pr-10 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${errors.password ? "border-red-500 focus:border-red-500" : "border-neutral-600 focus:border-white"}`}
                 placeholder="Password"
+                onFocus={() => setFocusedField("password")}
+                onBlur={() => setFocusedField(null)}
               />
-              <label className={getLabelClass(!!errors.password, false, false)}>Password</label>
+              <label className={getLabelClass("password", !!errors.password)}>Password</label>
 
               <button
                 type="button"
