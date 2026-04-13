@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('articles', function (Blueprint $table) {
+            $table->string('slug')->nullable()->unique()->after('content');
             $table->enum('status', ['draft', 'published'])->default('draft')->after('content');
         });
     }
