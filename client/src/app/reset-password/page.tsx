@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
     if (!token) return;
     try {
       setLoading(true);
-      await http.post("/reset-password", { token, password: data.password, password_confirmation: data.confirm });
+      await http.post("/reset-password", { reset_token: token, password: data.password, password_confirmation: data.confirm });
       toast.success("Password reset successfully!");
       setTimeout(() => router.push("/login"), 1500);
     } catch (err) {
