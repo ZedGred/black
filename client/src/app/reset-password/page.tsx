@@ -6,17 +6,34 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { http } from "@/lib/http";
 import { KeyRound, ArrowLeft, Eye, EyeOff, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
+import { useForm } from "@/hooks/useForm";
+
+const resetPasswordSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirm: z.string().min(1, "Confirm password is required"),
+}).refine((data) => data.password === data.confirm, {
+  message: "Passwords do not match",
+  path: ["confirm"],
+});
+
+type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
 
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const { register, handleSubmit, formState: { errors }, setError, watch } = useForm(resetPasswordSchema, {
+    defaultValues: { password: "", confirm: "" },
+  });
+
+  const watchedValues = watch();
 
   useEffect(() => {
     if (!token) {
@@ -25,26 +42,36 @@ export default function ResetPasswordPage() {
     }
   }, [token, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirm) {
-      toast.error("Passwords do not match");
-      return;
-    }
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
-    }
+  const onSubmit = async (data: ResetPasswordForm) => {
+    if (!token) return;
     try {
       setLoading(true);
-      await http.post("/reset-password", { token, password, password_confirmation: confirm });
-      toast.success("Password reset successfully! Redirecting to login...");
-      router.push("/login");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to reset password. The link may have expired.");
+      await http.post("/reset-password", { token, password: data.password, password_confirmation: data.confirm });
+      setSuccess(true);
+      toast.success("Password reset successfully!");
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const responseData = (err as any)?.response?.data;
+      if (responseData?.errors) {
+        Object.entries(responseData.errors).forEach(([field, messages]) => {
+          setError(field as keyof ResetPasswordForm, { message: (messages as string[])[0] });
+        });
+      } else {
+        toast.error(responseData?.message || "Failed to reset password. The link may have expired.");
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const getLabelClass = (fieldName: string, hasError: boolean) => {
+    const isFocused = focusedField === fieldName;
+    const hasValue = !!watchedValues[fieldName as keyof typeof watchedValues];
+    const base = "pointer-events-none absolute left-3 transition-all duration-200";
+    const position = isFocused || hasValue ? "top-1.5 text-xs" : "top-3.5 text-sm";
+    const color = hasError ? "text-red-500" : isFocused || hasValue ? "text-gray-400" : "text-gray-500";
+    return `${base} ${position} ${color}`;
   };
 
   if (!token) {
@@ -92,49 +119,51 @@ export default function ResetPasswordPage() {
               <p className="text-gray-400">Your new password must be at least 8 characters.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">New Password</label>
                 <div className="relative">
                   <input
+                    {...register("password")}
                     type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter new password"
-                    required
-                    minLength={8}
-                    className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-gray-500 transition-colors placeholder-gray-600"
+                    className={`peer w-full rounded-lg border bg-gray-900 px-3 pb-2 pt-5 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${
+                      errors.password ? "border-red-500 focus:border-red-500" : "border-gray-700 focus:border-gray-500"
+                    }`}
+                    placeholder="New password"
+                    onFocus={() => setFocusedField("password")}
+                    onBlur={() => setFocusedField(null)}
                   />
+                  <label className={getLabelClass("password", !!errors.password)}>New Password</label>
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Confirm Password</label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Confirm new password"
-                  required
-                  className={`w-full bg-gray-900 border text-white rounded-xl px-4 py-3 focus:outline-none transition-colors placeholder-gray-600 ${
-                    confirm && password !== confirm ? "border-red-700 focus:border-red-600" : "border-gray-700 focus:border-gray-500"
-                  }`}
-                />
-                {confirm && password !== confirm && (
-                  <p className="text-red-400 text-xs mt-1">Passwords do not match</p>
-                )}
+                <div className="relative">
+                  <input
+                    {...register("confirm")}
+                    type={showPassword ? "text" : "password"}
+                    className={`peer w-full rounded-lg border bg-gray-900 px-3 pb-2 pt-5 text-sm text-white placeholder-transparent focus:outline-none focus:ring-0 ${
+                      errors.confirm ? "border-red-500 focus:border-red-500" : "border-gray-700 focus:border-gray-500"
+                    }`}
+                    placeholder="Confirm password"
+                    onFocus={() => setFocusedField("confirm")}
+                    onBlur={() => setFocusedField(null)}
+                  />
+                  <label className={getLabelClass("confirm", !!errors.confirm)}>Confirm Password</label>
+                </div>
+                {errors.confirm && <p className="mt-1 text-xs text-red-500">{errors.confirm.message}</p>}
               </div>
 
               <button
                 type="submit"
-                disabled={loading || !password || !confirm || password !== confirm}
+                disabled={loading}
                 className="w-full flex items-center justify-center gap-2 py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? (
