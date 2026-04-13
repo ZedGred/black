@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
       setLoading(true);
       await http.post("/reset-password", { token, password: data.password, password_confirmation: data.confirm });
       toast.success("Password reset successfully!");
-      router.push("/login");
+      setTimeout(() => router.push("/login"), 1500);
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const responseData = (err as any)?.response?.data;
